@@ -1,21 +1,16 @@
-# MADHACK x Orca — AI Agent Hackathon
+# Hackathon x Orca — Alpaca Trading Agent
 
-Build **two AI agents** that communicate with each other and with the user through [Orca](https://orcaplatform.ai) — the orchestration layer for AI agents.
+Build an **AI trading assistant** that connects to [Alpaca Markets](https://alpaca.markets) through [Orca](https://orcaplatform.ai) — the orchestration layer for AI agents.
 
 ---
 
 ## The Challenge
 
-Each team is assigned a **travel-related API** (hotels, restaurants, events, tours, car rental, etc.).
-
-You must build:
+You have one agent. It receives natural language messages from users via Orca and responds by calling the **Alpaca Trading API** — fetching quotes, checking portfolios, placing and cancelling orders.
 
 | Agent | What it does | Port |
 |-------|-------------|------|
-| **Provider** | Connects to your assigned API. Handles search, booking, cancellation, listing — full CRUD. Responds to other agents. | 8000 |
-| **Consumer** | A personal AI assistant. Takes user requests, delegates to provider agents, returns friendly responses. | 8001 |
-
-At demo time, all consumer agents connect to **all** provider agents through Orca. Your consumer will talk to every team's provider.
+| **Trading Agent** | Understands user intent, calls Alpaca API, returns a helpful reply | 8000 |
 
 ---
 
@@ -23,42 +18,30 @@ At demo time, all consumer agents connect to **all** provider agents through Orc
 
 ```bash
 # 1. Clone this repo
-git clone <repo-url> && cd <repo-name>
+git clone <repo-url> && cd boilerplate-alpaca
 
-# 2. Install and run the provider agent
-cd provider
+# 2. Install and run the agent
+cd agent
 pip install -r requirements.txt
 python main.py
 # → runs on http://localhost:8000
-
-# 3. In another terminal, run the consumer agent
-cd consumer
-pip install -r requirements.txt
-python main.py
-# → runs on http://localhost:8001
 ```
 
 Or with Docker:
 
 ```bash
-cd provider && docker compose up --build
-cd consumer && docker compose up --build
+cd agent && docker compose up --build
 ```
 
-> **API keys** (OpenAI, your assigned API, etc.) are configured in the Orca admin panel and delivered to your agent in every request via `data.variables`. Use `Variables(data.variables).get("VARIABLE_NAME")` to read them — no environment variables needed.
+> **API keys** (`ALPACA_API_KEY`, `ALPACA_SECRET_KEY`, `OPENAI_API_KEY`, etc.) are configured in the Orca admin panel and delivered to your agent in every request via `data.variables`. Use `Variables(data.variables).get("VARIABLE_NAME")` to read them — no local environment variables needed.
 
 ---
 
 ## Project Structure
 
 ```
-├── provider/
-│   ├── main.py              ← Your provider agent (START HERE)
-│   ├── requirements.txt
-│   ├── Dockerfile
-│   └── docker-compose.yml
-├── consumer/
-│   ├── main.py              ← Your consumer agent
+├── agent/
+│   ├── main.py              ← Your trading agent (START HERE)
 │   ├── requirements.txt
 │   ├── Dockerfile
 │   └── docker-compose.yml
@@ -70,25 +53,69 @@ cd consumer && docker compose up --build
 
 ## What You Need to Build
 
-### Provider Agent (the hard part)
-
-Your provider agent receives questions from consumer agents and must:
+Your agent receives a message from a user (e.g. *"What's Apple's current price?"* or *"Buy 5 shares of TSLA"*) and must:
 
 1. **Understand the request** — use an LLM (OpenAI, Anthropic, etc.)
-2. **Call your assigned API** — REST calls with authentication (`X-API-Key` header)
-3. **Return structured results** — keep responses concise and data-rich
+2. **Call Alpaca** — use `alpaca-py` to interact with the trading API
+3. **Reply to the user** — stream a clear, concise response via `session.stream()`
 
-Think about: What API endpoints do you need? How do you map natural language to API calls? How do you handle errors? How do you keep token usage low?
+Think about: How do you parse intent? How do you handle ambiguous requests? How do you keep responses short and useful?
 
-### Consumer Agent (the creative part)
+---
 
-Your consumer agent talks to end users and must:
+## Alpaca Variables (set in Orca admin panel)
 
-1. **Understand what the user wants** — parse intent from natural language
-2. **Delegate to providers** — use `session.ask_agent()` to call the right provider
-3. **Synthesize responses** — turn raw data into a friendly, helpful reply
+| Variable | Description |
+|----------|-------------|
+| `ALPACA_API_KEY` | Your Alpaca API key ID |
+| `ALPACA_SECRET_KEY` | Your Alpaca secret key |
+| `ALPACA_BASE_URL` | `https://paper-api.alpaca.markets` (paper) or `https://api.alpaca.markets` (live) |
+| `OPENAI_API_KEY` | Optional — for LLM-based intent parsing |
 
-Think about: What persona does your assistant have? How do you pick which provider to call? How do you handle multi-step tasks (search → compare → book)?
+> Start with **paper trading** — it's free, requires no real money, and behaves identically to live trading.
+
+---
+
+## Alpaca API Quick Reference
+
+Install: `pip install alpaca-py`
+
+```python
+from alpaca.trading.client import TradingClient
+from alpaca.data.historical import StockHistoricalDataClient
+from alpaca.trading.requests import MarketOrderRequest, GetOrdersRequest
+from alpaca.trading.enums import OrderSide, TimeInForce
+from alpaca.data.requests import StockLatestQuoteRequest
+
+trading     = TradingClient(api_key, secret_key, paper=True)
+market_data = StockHistoricalDataClient(api_key, secret_key)
+
+# Account info
+account = trading.get_account()
+print(account.buying_power, account.portfolio_value)
+
+# Positions
+positions = trading.get_all_positions()
+
+# Latest quote
+req   = StockLatestQuoteRequest(symbol_or_symbols="AAPL")
+quote = market_data.get_stock_latest_quote(req)
+ask   = quote["AAPL"].ask_price
+
+# Place a market buy order
+order = trading.submit_order(MarketOrderRequest(
+    symbol="AAPL",
+    qty=1,
+    side=OrderSide.BUY,
+    time_in_force=TimeInForce.DAY,
+))
+
+# Cancel all open orders
+trading.cancel_orders()
+
+# Close all positions
+trading.close_all_positions(cancel_orders=True)
+```
 
 ---
 
@@ -113,21 +140,22 @@ async def process_message(data: ChatMessage):
 app, orca = create_agent_app(process_message_func=process_message)
 ```
 
-### Reading Variables (API keys, config)
+### Reading Variables
 
 ```python
 from orca import Variables
 
-variables = Variables(data.variables)
-api_key = variables.get("OPENAI_API_KEY")
+variables  = Variables(data.variables)
+api_key    = variables.get("ALPACA_API_KEY")
+secret_key = variables.get("ALPACA_SECRET_KEY")
 ```
 
 ### Loading Indicators
 
 ```python
-session.loading.start("thinking")
-# ... do work ...
-session.loading.end("thinking")
+session.loading.start("fetching quote")
+# ... call Alpaca ...
+session.loading.end("fetching quote")
 ```
 
 ### Error Handling
@@ -139,32 +167,13 @@ except Exception as e:
     session.error("Something went wrong", exception=e)
 ```
 
-### Agent-to-Agent Communication
-
-```python
-# See what provider agents are connected
-for agent in session.available_agents:
-    print(agent.slug, agent.name, agent.description)
-
-# Ask a provider agent a question
-response = session.ask_agent("hotel-agent", "Find rooms for 2 guests, March 15-17")
-
-# Handle errors
-try:
-    response = session.ask_agent("hotel-agent", "your question")
-except ValueError:
-    # agent not connected
-except RuntimeError:
-    # agent unavailable or timeout
-```
-
 ### Chat History
 
 ```python
 from orca import ChatHistoryHelper
 
 history = ChatHistoryHelper(data.chat_history)
-recent_messages = history.get_last_n_messages(10)
+recent  = history.get_last_n_messages(10)
 ```
 
 ### Usage Tracking
@@ -175,32 +184,16 @@ session.usage.track(tokens=1500, token_type="total")
 
 ---
 
-## How Agents Connect
+## How It Connects
 
 ```
-                    ┌──────────────────┐
-  User ──────────►  │  Consumer Agent   │
-                    │  (your code)      │
-                    └────────┬─────────┘
-                             │
-                   session.ask_agent()
-                             │
-                             ▼
-                    ┌──────────────────┐
-                    │    Orca Cloud     │
-                    │  (orchestration)  │
-                    └────────┬─────────┘
-                             │
-              ┌──────────────┼──────────────┐
-              ▼              ▼              ▼
-     ┌────────────┐ ┌────────────┐ ┌────────────┐
-     │  Hotel      │ │ Restaurant │ │  Events    │
-     │  Provider   │ │  Provider  │ │  Provider  │
-     │ (Team A)    │ │ (Team B)   │ │ (Team C)   │
-     └────────────┘ └────────────┘ └────────────┘
+  User ──────► Orca Cloud ──────► Your Agent (port 8000)
+                                       │
+                                  alpaca-py
+                                       │
+                                  Alpaca API
+                              (paper or live trading)
 ```
-
-You develop locally. Orca handles the cloud orchestration and routing between agents.
 
 ---
 
@@ -208,25 +201,27 @@ You develop locally. Orca handles the cloud orchestration and routing between ag
 
 | Criteria | Description |
 |----------|-------------|
-| **Functionality** | Does it work? Rate the number of useful outputs (out of 10). |
-| **API Integration** | Number and relevance of travel APIs used. |
-| **Efficiency** | Optimization of prompts and tokens used per request. |
+| **Functionality** | Does it work? How many trading operations does it support? |
+| **API Coverage** | Breadth of Alpaca features used (quotes, orders, positions, history, etc.) |
+| **Efficiency** | Prompt and token optimization per request |
 
 ---
 
 ## Tips
 
-- Start with the **provider agent** — get your API calls working first
-- Use **function calling** (OpenAI) or **tool use** (Anthropic) to map user intent to API endpoints
-- Keep provider responses **short and structured** — the consumer agent will format them
-- Test your provider by running it and sending requests directly before connecting through Orca
-- Add dependencies to `requirements.txt` as you go (`openai`, `httpx`, `anthropic`, etc.)
-- Check your API documentation for available endpoints, auth method, and data formats
+- Use **paper trading** during development — it's safe and free
+- Use **function calling** (OpenAI) or **tool use** (Anthropic) to map user intent to Alpaca actions
+- Return **concise, structured responses** — the user doesn't need raw JSON
+- Add dependencies to `requirements.txt` as you go (`openai`, `anthropic`, `httpx`, etc.)
+- Test your agent locally before connecting through Orca
 
 ---
 
 ## Resources
 
+- [Alpaca Trading API Docs](https://docs.alpaca.markets/reference/getallaccounts-1)
+- [alpaca-py SDK on PyPI](https://pypi.org/project/alpaca-py/)
+- [alpaca-py GitHub](https://github.com/alpacahq/alpaca-py)
 - [Orca SDK on PyPI](https://pypi.org/project/orca-platform-sdk-ui/)
 - [OpenAI Function Calling](https://platform.openai.com/docs/guides/function-calling)
 - [Anthropic Tool Use](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)
