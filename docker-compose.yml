@@ -1,0 +1,10 @@
+services:
+  trading-agent:
+    build: ./trading-agent
+    ports:
+      - "8000:8000"
+
+  broker-agent:
+    build: ./broker-agent
+    ports:
+      - "8001:8001"

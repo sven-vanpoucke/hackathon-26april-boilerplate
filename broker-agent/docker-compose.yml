@@ -1,0 +1,5 @@
+services:
+  broker-agent:
+    build: .
+    ports:
+      - "8001:8001"
