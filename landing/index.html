@@ -610,6 +610,28 @@
     // Silent dyno warm-up — discarded.
     fetch(API + "/", { method: "HEAD", mode: "cors" }).catch(function () {});
 
+    // Shared chat state with /chat.html (sessionStorage survives navigation in same tab).
+    var STORAGE_KEY = "tripvest:chat";
+    function saveState() {
+      try {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ threadId: threadId, history: history }));
+      } catch (e) {}
+    }
+    function hydrateState() {
+      try {
+        var raw = sessionStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        var data = JSON.parse(raw);
+        if (!data || !Array.isArray(data.history) || !data.history.length) return false;
+        history = data.history.slice();
+        threadId = data.threadId || null;
+        history.forEach(function (m) {
+          bubble(m.role === "assistant" ? "bot" : "user", m.content || "");
+        });
+        return true;
+      } catch (e) { return false; }
+    }
+
     async function send(message) {
       bubble("user", message);
       history.push({ role: "user", content: message });
@@ -633,6 +655,7 @@
       } finally {
         sendBtn.disabled = false; input.disabled = false;
         input.focus();
+        saveState();
       }
     }
 
@@ -645,7 +668,8 @@
     });
 
     // ----- Lazy auto-greet with trip context -----
-    var greeted = false;
+    // If we restored a prior conversation, skip the greet.
+    var greeted = hydrateState();
     function buildGreeting() {
       var costStr = fmt(selectedTrip.cost);
       if (selectedTrip.label) {

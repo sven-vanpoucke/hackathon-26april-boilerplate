@@ -85,6 +85,28 @@
   var history = [];
   var threadId = null;
 
+  // Shared chat state with index.html (sessionStorage survives navigation in same tab).
+  var STORAGE_KEY = "tripvest:chat";
+  function saveState() {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ threadId: threadId, history: history }));
+    } catch (e) {}
+  }
+  function hydrateState() {
+    try {
+      var raw = sessionStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      var data = JSON.parse(raw);
+      if (!data || !Array.isArray(data.history) || !data.history.length) return false;
+      history = data.history.slice();
+      threadId = data.threadId || null;
+      history.forEach(function (m) {
+        addBubble(m.role === "assistant" ? "bot" : "user", m.content || "");
+      });
+      return true;
+    } catch (e) { return false; }
+  }
+
   function renderMarkdown(text) {
     function escape(s) {
       return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -166,6 +188,7 @@
     } finally {
       send.disabled = false; input.disabled = false;
       input.focus();
+      saveState();
     }
   }
 
@@ -194,7 +217,10 @@
     }
     return "Hi! Give me more info — how do I get my trip in 10 years for half the price?";
   }
-  window.addEventListener("load", function () { sendMessage(buildGreeting()); });
+  window.addEventListener("load", function () {
+    if (hydrateState()) return; // resumed an in-progress chat from the landing page
+    sendMessage(buildGreeting());
+  });
 </script>
 </body>
 </html>
