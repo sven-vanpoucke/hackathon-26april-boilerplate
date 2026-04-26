@@ -3,66 +3,139 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>TripVest</title>
+<title>TripVest — chat</title>
 <style>
   :root {
-    --bg: #fafaf9;
+    --bg: #f4f4f5;
     --fg: #18181b;
     --muted: #71717a;
     --accent: #0f766e;
+    --accent-hover: #115e59;
     --bubble-user: #0f766e;
     --bubble-bot: #ffffff;
     --border: #e4e4e7;
+    --card: #ffffff;
+    --shadow: 0 8px 30px rgba(0,0,0,0.06);
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; height: 100%; }
   body {
     background: var(--bg);
     color: var(--fg);
-    font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-    display: flex; flex-direction: column; height: 100dvh;
+    font: 15.5px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    display: flex; flex-direction: column; align-items: center;
+    height: 100dvh;
+  }
+  .app {
+    display: flex; flex-direction: column;
+    width: 100%; max-width: 760px; height: 100%;
+    background: var(--card); box-shadow: var(--shadow);
   }
   header {
-    padding: 12px 16px; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 8px; background: #fff;
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px; background: var(--card);
+    position: sticky; top: 0; z-index: 1;
   }
-  header h1 { margin: 0; font-size: 16px; font-weight: 600; }
-  header span { color: var(--muted); font-size: 13px; }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  header h1 { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.2; }
+  header .sub { color: var(--muted); font-size: 12px; line-height: 1.2; }
+  header .live {
+    margin-left: auto; font-size: 12px; color: var(--accent); font-weight: 600;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  header .live::before {
+    content: ""; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent); animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+  }
   #log {
-    flex: 1; overflow-y: auto; padding: 16px;
-    display: flex; flex-direction: column; gap: 10px;
+    flex: 1; overflow-y: auto; padding: 20px 16px;
+    display: flex; flex-direction: column; gap: 8px;
+    background: var(--bg);
   }
-  .msg { max-width: 86%; padding: 10px 14px; border-radius: 16px; white-space: pre-wrap; word-wrap: break-word; }
-  .msg.user { align-self: flex-end; background: var(--bubble-user); color: #fff; border-bottom-right-radius: 4px; }
-  .msg.bot { align-self: flex-start; background: var(--bubble-bot); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+  .msg {
+    max-width: 82%; padding: 10px 14px; border-radius: 16px;
+    word-wrap: break-word; line-height: 1.5;
+  }
+  .msg.user {
+    align-self: flex-end; background: var(--bubble-user); color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .msg.bot {
+    align-self: flex-start; background: var(--bubble-bot);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
   .msg.bot.thinking { color: var(--muted); font-style: italic; }
   .msg.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+  .msg strong { font-weight: 600; }
+  .msg em { font-style: italic; }
+  .msg code {
+    background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 4px;
+    font: 13px ui-monospace, SFMono-Regular, monospace;
+  }
+  .msg.user code { background: rgba(255,255,255,0.18); }
+  .msg a { color: inherit; text-decoration: underline; }
+  .msg.user a { color: #fff; }
+  .msg ul, .msg ol { margin: 4px 0; padding-left: 22px; }
+  .msg li { margin: 2px 0; }
   form {
-    display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--border);
-    background: #fff; padding-bottom: max(12px, env(safe-area-inset-bottom));
+    display: flex; gap: 8px; padding: 12px;
+    border-top: 1px solid var(--border); background: var(--card);
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
   input {
-    flex: 1; padding: 12px 14px; border: 1px solid var(--border);
-    border-radius: 999px; font-size: 16px; background: #fff; color: var(--fg);
+    flex: 1; padding: 12px 16px; border: 1px solid var(--border);
+    border-radius: 999px; font-size: 15px; background: var(--bg); color: var(--fg);
+    transition: border-color 120ms, background 120ms;
   }
-  input:focus { outline: none; border-color: var(--accent); }
+  input:focus { outline: none; border-color: var(--accent); background: var(--card); }
   button {
-    padding: 0 18px; border: 0; border-radius: 999px;
-    background: var(--accent); color: #fff; font-weight: 600; cursor: pointer;
+    width: 44px; height: 44px; border: 0; border-radius: 50%;
+    background: var(--accent); color: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 120ms, transform 80ms;
   }
-  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button:hover:not(:disabled) { background: var(--accent-hover); }
+  button:active:not(:disabled) { transform: scale(0.95); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button svg { width: 18px; height: 18px; }
+  @media (min-width: 760px) {
+    body { padding: 24px 0; }
+    .app { height: calc(100dvh - 48px); border-radius: 16px; overflow: hidden; }
+  }
 </style>
 </head>
 <body>
-<header>
-  <h1>✈️ TripVest</h1>
-  <span>sandbox demo</span>
-</header>
-<main id="log" aria-live="polite"></main>
-<form id="form">
-  <input id="input" placeholder="Type a message…" autocomplete="off" />
-  <button id="send" type="submit">Send</button>
-</form>
+<div class="app">
+  <header>
+    <div class="avatar">✈️</div>
+    <div>
+      <h1>TripVest</h1>
+      <div class="sub">your investment buddy</div>
+    </div>
+    <span class="live">live</span>
+  </header>
+  <main id="log" aria-live="polite"></main>
+  <form id="form">
+    <input id="input" placeholder="Type a message…" autocomplete="off" />
+    <button id="send" type="submit" aria-label="Send">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </button>
+  </form>
+</div>
 <script>
   const log = document.getElementById("log");
   const form = document.getElementById("form");
@@ -71,10 +144,40 @@
   const history = [];
   let threadId = null;
 
+  function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function renderMarkdown(text) {
+    let h = escapeHtml(text);
+    // [label](url) — match before bare-URL pass
+    h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    // bare URLs (skip if already inside an href="...")
+    h = h.replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+    // **bold**
+    h = h.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+    // *italic* — single asterisks, don't match across newlines
+    h = h.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
+    // `inline code`
+    h = h.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+    // Bullet lists — group consecutive "- " lines into <ul>
+    h = h.replace(/(?:^|\n)((?:[-•] [^\n]+(?:\n|$))+)/g, function (_, block) {
+      const items = block.trim().split(/\n/).map(l => "<li>" + l.replace(/^[-•] /, "") + "</li>").join("");
+      return "\n<ul>" + items + "</ul>";
+    });
+    // Remaining newlines → <br/>
+    h = h.replace(/\n/g, "<br/>");
+    return h;
+  }
+
   function addBubble(role, text, extraClass = "") {
     const el = document.createElement("div");
     el.className = `msg ${role}${extraClass ? " " + extraClass : ""}`;
-    el.textContent = text;
+    if (role === "bot" && !extraClass.includes("thinking")) {
+      el.innerHTML = renderMarkdown(text);
+    } else {
+      el.textContent = text;
+    }
     log.appendChild(el);
     log.scrollTop = log.scrollHeight;
     return el;

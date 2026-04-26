@@ -4,16 +4,21 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>TripVest — your 2036 trip, half-priced</title>
-<meta name="description" content="Save for a future trip. Your money roughly doubles in 10 years — start with €25 today and your 2036 trip is effectively half-price." />
+<meta name="description" content="Markets double every ~10 years. So your dream 2036 trip is effectively half-price — if you start today. Pick a destination, see the math." />
 <script src="/config.js"></script>
 <style>
   :root {
     --bg: #fafaf9;
-    --fg: #18181b;
-    --muted: #71717a;
+    --fg: #0c0a09;
+    --muted: #78716c;
+    --muted-2: #a8a29e;
     --accent: #0f766e;
+    --accent-soft: #ccfbf1;
     --accent-hover: #115e59;
-    --border: #e4e4e7;
+    --warm: #ea580c;
+    --warm-soft: #fed7aa;
+    --warm-deep: #9a3412;
+    --border: #e7e5e4;
     --card: #ffffff;
   }
   * { box-sizing: border-box; }
@@ -21,166 +26,431 @@
   body {
     background: var(--bg);
     color: var(--fg);
-    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font: 16px/1.55 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-  .wrap {
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 32px 20px 80px;
+  ::selection { background: var(--accent-soft); color: var(--accent-hover); }
+
+  .hero-bg {
+    background:
+      radial-gradient(60% 80% at 90% 0%, var(--warm-soft) 0%, transparent 55%),
+      radial-gradient(50% 70% at 0% 20%, var(--accent-soft) 0%, transparent 60%),
+      var(--bg);
+    border-bottom: 1px solid var(--border);
   }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 24px 20px 80px; }
+
   header {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 56px;
   }
-  .brand { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
-  .brand span { margin-right: 6px; }
+  .brand {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 800; font-size: 18px; letter-spacing: -0.02em;
+  }
+  .brand .dot {
+    display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+  }
   .badge {
     font-size: 12px; color: var(--muted);
     border: 1px solid var(--border); border-radius: 999px;
-    padding: 4px 10px; background: var(--card);
+    padding: 5px 12px; background: var(--card); font-weight: 500;
   }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--card); color: var(--accent-hover);
+    padding: 6px 14px; border-radius: 999px;
+    font-size: 13px; font-weight: 600; letter-spacing: -0.005em;
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .eyebrow .pulse {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.4); } }
+
   h1 {
-    font-size: clamp(32px, 7vw, 48px);
-    line-height: 1.1; letter-spacing: -0.02em;
+    font-size: clamp(40px, 8.4vw, 76px);
+    line-height: 0.98; letter-spacing: -0.035em;
+    margin: 0 0 20px; font-weight: 800;
+  }
+  h1 .accent { color: var(--accent); }
+  h1 .strike {
+    position: relative; display: inline-block; color: var(--muted-2);
+    font-weight: 700;
+  }
+  h1 .strike::after {
+    content: ""; position: absolute;
+    left: -3%; right: -3%; top: 52%;
+    height: 5px; background: var(--warm);
+    border-radius: 4px; transform: rotate(-3deg);
+  }
+
+  .lede {
+    font-size: clamp(17px, 2.2vw, 20px);
+    color: var(--muted);
+    max-width: 580px;
+    margin: 0 0 32px;
+    line-height: 1.55;
+  }
+  .lede strong { color: var(--fg); font-weight: 600; }
+
+  .compare {
+    margin: 24px 0 8px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 24px; padding: 24px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02), 0 12px 40px -16px rgba(15,118,110,0.18);
+  }
+  .compare-head {
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin: 0 0 14px;
+  }
+  .trips {
+    display: flex; gap: 8px; flex-wrap: wrap;
     margin: 0 0 16px;
   }
-  .lede {
-    font-size: clamp(16px, 4vw, 18px);
-    color: var(--muted);
-    max-width: 540px;
-    margin: 0 0 32px;
+  .trip-chip {
+    background: var(--bg); border: 1px solid var(--border);
+    padding: 8px 14px; border-radius: 999px;
+    font-size: 14px; cursor: pointer; font-weight: 500; color: var(--fg);
+    transition: all 120ms; font-family: inherit;
+    display: inline-flex; align-items: center; gap: 6px;
   }
+  .trip-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .trip-chip.active {
+    background: var(--fg); color: #fff; border-color: var(--fg);
+  }
+  .slider-wrap {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 13px; color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .slider-wrap input[type=range] {
+    flex: 1; accent-color: var(--accent); height: 4px;
+  }
+
+  .compare-grid {
+    display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px;
+    align-items: stretch;
+  }
+  .compare-cell {
+    padding: 18px 20px; border-radius: 18px;
+    border: 1px solid transparent;
+  }
+  .compare-cell.today { background: var(--accent-soft); }
+  .compare-cell.future { background: var(--warm-soft); }
+  .compare-label {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+  .compare-cell.today .compare-label { color: var(--accent-hover); }
+  .compare-cell.future .compare-label { color: var(--warm-deep); }
+  .compare-amount {
+    font-size: clamp(28px, 5.5vw, 44px); font-weight: 800;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    transition: color 120ms;
+  }
+  .compare-cell.today .compare-amount { color: var(--accent-hover); }
+  .compare-cell.future .compare-amount { color: var(--warm-deep); }
+  .compare-sub { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .compare-sub strong { color: var(--fg); font-weight: 600; }
+  .compare-arrow {
+    align-self: center;
+    color: var(--muted-2); font-size: 22px;
+    text-align: center; padding: 0 4px;
+    font-weight: 300;
+  }
+
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 28px; }
   .cta {
     display: inline-flex; align-items: center; gap: 8px;
-    background: var(--accent); color: #fff;
-    padding: 14px 22px; border-radius: 999px;
+    background: var(--fg); color: #fff;
+    padding: 16px 24px; border-radius: 999px;
     text-decoration: none; font-weight: 600; font-size: 16px;
-    transition: background 120ms;
+    transition: transform 120ms, background 120ms, box-shadow 120ms;
+    border: 0; cursor: pointer; font-family: inherit;
   }
-  .cta:hover { background: var(--accent-hover); }
-  .cta:active { transform: translateY(1px); }
-  .cta-note { display: block; font-size: 13px; color: var(--muted); margin-top: 12px; }
-  /* Inline chat widget */
-  .chat-card {
-    margin-top: 24px;
+  .cta:hover { background: #000; transform: translateY(-1px); box-shadow: 0 8px 24px -8px rgba(0,0,0,0.3); }
+  .cta:active { transform: translateY(0); }
+  .cta-secondary {
+    background: transparent; color: var(--fg);
+    border: 1px solid var(--border);
+    padding: 15px 22px;
+  }
+  .cta-secondary:hover { background: var(--card); transform: none; box-shadow: none; }
+  .cta-note { font-size: 13px; color: var(--muted); margin: 12px 0 0; }
+
+  section { margin-top: 80px; }
+  section > h2 {
+    font-size: clamp(28px, 4.5vw, 40px);
+    letter-spacing: -0.025em; margin: 0 0 8px; font-weight: 700;
+    line-height: 1.1;
+  }
+  section > .lede-2 { color: var(--muted); margin: 0 0 28px; max-width: 580px; font-size: 17px; }
+
+  .why { display: grid; gap: 12px; grid-template-columns: 1fr; }
+  .why-item {
+    padding: 24px; border-radius: 20px;
     background: var(--card); border: 1px solid var(--border);
-    border-radius: 16px; overflow: hidden;
-    display: flex; flex-direction: column;
-    height: clamp(420px, 60vh, 560px);
+    transition: transform 160ms, box-shadow 160ms;
   }
-  .chat-head {
-    padding: 12px 16px; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 8px;
-    font-size: 14px;
+  .why-item:hover { transform: translateY(-2px); box-shadow: 0 12px 32px -16px rgba(0,0,0,0.12); }
+  .why-item .num {
+    font-size: 38px; font-weight: 800; letter-spacing: -0.03em;
+    color: var(--accent); line-height: 1;
+    font-variant-numeric: tabular-nums;
   }
-  .chat-head strong { font-weight: 600; }
-  .chat-head .live { color: var(--accent); font-size: 12px; margin-left: auto; }
-  .chat-head .live::before {
-    content: ""; display: inline-block; width: 8px; height: 8px;
-    background: var(--accent); border-radius: 50%; margin-right: 5px;
-    vertical-align: 1px;
+  .why-item h3 { margin: 12px 0 6px; font-size: 17px; font-weight: 600; }
+  .why-item p { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.55; }
+
+  .chart-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 24px; padding: 24px;
   }
-  .chat-log {
-    flex: 1; overflow-y: auto; padding: 14px;
-    display: flex; flex-direction: column; gap: 8px;
-    background: var(--bg);
-  }
-  .chat-msg {
-    max-width: 86%; padding: 9px 13px; border-radius: 14px;
-    white-space: pre-wrap; word-wrap: break-word; font-size: 14.5px; line-height: 1.45;
-  }
-  .chat-msg.user {
-    align-self: flex-end; background: var(--accent); color: #fff;
-    border-bottom-right-radius: 4px;
-  }
-  .chat-msg.bot {
-    align-self: flex-start; background: var(--card); border: 1px solid var(--border);
-    border-bottom-left-radius: 4px;
-  }
-  .chat-msg.bot.thinking { color: var(--muted); font-style: italic; }
-  .chat-msg.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-  .chat-form {
-    display: flex; gap: 8px; padding: 10px;
-    border-top: 1px solid var(--border); background: var(--card);
-  }
-  .chat-form input {
-    flex: 1; padding: 10px 14px; border: 1px solid var(--border);
-    border-radius: 999px; font-size: 15px; background: #fff; color: var(--fg);
-  }
-  .chat-form input:focus { outline: none; border-color: var(--accent); }
-  .chat-form button {
-    padding: 0 18px; border: 0; border-radius: 999px;
-    background: var(--accent); color: #fff; font-weight: 600;
-    cursor: pointer; font-size: 15px;
-  }
-  .chat-form button:disabled { opacity: 0.5; cursor: not-allowed; }
-  .chat-link {
-    display: inline-block; margin-top: 12px; font-size: 13px;
-    color: var(--muted); text-decoration: none;
-  }
-  .chat-link:hover { color: var(--fg); }
-  section.steps {
-    margin-top: 72px;
-    display: grid; gap: 16px;
-  }
+  .chart-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .chart-head h3 { margin: 0; font-size: 16px; font-weight: 600; }
+  .legend { display: flex; gap: 14px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .dot-savings { background: var(--muted-2); }
+  .dot-invest { background: var(--accent); }
+  #chart { display: block; width: 100%; height: auto; }
+  .chart-foot { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+
+  .steps { display: grid; gap: 12px; grid-template-columns: 1fr; }
   .step {
     background: var(--card); border: 1px solid var(--border);
-    border-radius: 16px; padding: 20px;
+    border-radius: 20px; padding: 22px;
     display: flex; gap: 16px; align-items: flex-start;
   }
   .step-num {
     flex-shrink: 0;
-    width: 36px; height: 36px; border-radius: 50%;
-    background: var(--accent); color: #fff;
+    width: 36px; height: 36px; border-radius: 12px;
+    background: var(--accent-soft); color: var(--accent-hover);
     display: flex; align-items: center; justify-content: center;
-    font-weight: 700;
+    font-weight: 700; font-size: 15px;
   }
-  .step h3 { margin: 2px 0 4px; font-size: 16px; }
-  .step p { margin: 0; color: var(--muted); font-size: 15px; }
-  .chart-card {
-    margin-top: 48px;
+  .step h3 { margin: 4px 0 6px; font-size: 16px; font-weight: 600; }
+  .step p { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.55; }
+
+  .chat-card {
     background: var(--card); border: 1px solid var(--border);
-    border-radius: 16px; padding: 20px;
+    border-radius: 24px; overflow: hidden;
+    display: flex; flex-direction: column;
+    height: clamp(440px, 60vh, 580px);
   }
-  .chart-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
-  .chart-head h2 { margin: 0; font-size: 16px; font-weight: 600; }
-  .legend { display: flex; gap: 14px; font-size: 13px; color: var(--muted); }
-  .legend-item { display: inline-flex; align-items: center; gap: 6px; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-  .dot-savings { background: #a1a1aa; }
-  .dot-invest { background: var(--accent); }
-  #chart { display: block; width: 100%; height: auto; }
-  .chart-foot { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+  .chat-head {
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px;
+  }
+  .chat-head strong { font-weight: 600; }
+  .chat-head .live { color: var(--accent); font-size: 12px; margin-left: auto; font-weight: 500; }
+  .chat-head .live::before {
+    content: ""; display: inline-block; width: 8px; height: 8px;
+    background: var(--accent); border-radius: 50%; margin-right: 5px;
+    vertical-align: 1px; animation: pulse 1.6s ease-in-out infinite;
+  }
+  .chat-log {
+    flex: 1; overflow-y: auto; padding: 16px;
+    display: flex; flex-direction: column; gap: 8px;
+    background: var(--bg);
+  }
+  .chat-msg {
+    max-width: 86%; padding: 10px 14px; border-radius: 16px;
+    white-space: pre-wrap; word-wrap: break-word;
+    font-size: 14.5px; line-height: 1.45;
+  }
+  .chat-msg.user { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+  .chat-msg.bot { align-self: flex-start; background: var(--card); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+  .chat-msg.bot.thinking { color: var(--muted); font-style: italic; }
+  .chat-msg.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+  .chat-form {
+    display: flex; gap: 8px; padding: 12px;
+    border-top: 1px solid var(--border); background: var(--card);
+  }
+  .chat-form input {
+    flex: 1; padding: 12px 16px; border: 1px solid var(--border);
+    border-radius: 999px; font-size: 15px; background: var(--bg);
+    color: var(--fg); font-family: inherit;
+  }
+  .chat-form input:focus { outline: none; border-color: var(--accent); background: #fff; }
+  .chat-form button {
+    padding: 0 20px; border: 0; border-radius: 999px;
+    background: var(--accent); color: #fff; font-weight: 600;
+    cursor: pointer; font-size: 15px; font-family: inherit;
+  }
+  .chat-form button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .chat-link { display: inline-block; margin-top: 12px; font-size: 13px; color: var(--muted); text-decoration: none; }
+  .chat-link:hover { color: var(--fg); }
+
   .small {
-    margin-top: 56px;
+    margin-top: 64px;
     padding-top: 24px; border-top: 1px solid var(--border);
     font-size: 13px; color: var(--muted);
   }
   .small p { margin: 0 0 6px; }
-  @media (min-width: 640px) {
-    .wrap { padding: 56px 32px 100px; }
+
+  @media (min-width: 720px) {
+    .wrap { padding: 32px 40px 100px; }
+    .why { grid-template-columns: repeat(3, 1fr); }
+    .steps { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 540px) {
+    .compare-grid { grid-template-columns: 1fr; }
+    .compare-arrow { transform: rotate(90deg); padding: 4px 0; }
+    h1 { font-size: 44px; }
   }
 </style>
 </head>
 <body>
+
+<div class="hero-bg">
 <div class="wrap">
   <header>
-    <div class="brand"><span>✈️</span>TripVest</div>
+    <div class="brand"><span class="dot"></span>TripVest</div>
     <div class="badge">sandbox demo</div>
   </header>
 
   <main>
-    <h1>Your 2036 trip, <br/>half-priced.</h1>
+    <div class="eyebrow"><span class="pulse"></span>Compound interest > grinding</div>
+
+    <h1>
+      Your 2036 trip,<br/>
+      <span class="strike">full price</span> <span class="accent">half-priced.</span>
+    </h1>
+
     <p class="lede">
-      Invest a little today. Your money roughly doubles over ~10 years,
-      so the dream trip you want in 2036 effectively costs half what it
-      does now — when you start today.
+      Markets historically double every <strong>~10 years</strong>. So a €4,000 trip
+      in 2036 effectively costs <strong>€2,000 today</strong> — your money does the rest.
+      Pick a destination, watch the math.
     </p>
 
-    <section class="chat-card" aria-label="TripVest chat">
+    <div class="compare" id="compare">
+      <p class="compare-head">Where do you want to wake up in 2036?</p>
+      <div class="trips" id="trips">
+        <button class="trip-chip active" data-cost="4000">🗼 Tokyo · €4k</button>
+        <button class="trip-chip" data-cost="6000">🏔️ Patagonia · €6k</button>
+        <button class="trip-chip" data-cost="3000">❄️ Iceland · €3k</button>
+        <button class="trip-chip" data-cost="2500">🏝️ Bali · €2.5k</button>
+        <button class="trip-chip" data-cost="8000">🦁 Kenya safari · €8k</button>
+      </div>
+
+      <div class="slider-wrap">
+        <span>€500</span>
+        <input type="range" id="trip-slider" min="500" max="10000" step="100" value="4000" aria-label="Trip cost in 2036" />
+        <span>€10k</span>
+      </div>
+
+      <div class="compare-grid">
+        <div class="compare-cell today">
+          <div class="compare-label">Invest today</div>
+          <div class="compare-amount" id="amt-today">€2,034</div>
+          <div class="compare-sub">one-time · or <strong id="amt-monthly">€23</strong>/mo for 10 yrs</div>
+        </div>
+        <div class="compare-arrow">→</div>
+        <div class="compare-cell future">
+          <div class="compare-label">Worth in 2036</div>
+          <div class="compare-amount" id="amt-future">€4,000</div>
+          <div class="compare-sub">your trip, fully funded ✈️</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-row">
+      <button class="cta" id="start-cta">Start your trip fund →</button>
+      <a href="/chat.html" class="cta cta-secondary">Open full chat ↗</a>
+    </div>
+    <p class="cta-note">Sandbox demo · 3-min onboarding · no card needed.</p>
+  </main>
+</div>
+</div>
+
+<div class="wrap">
+  <section>
+    <h2>Why this isn't a gimmick</h2>
+    <p class="lede-2">It's the boring math that compounds while you're busy living.</p>
+    <div class="why">
+      <div class="why-item">
+        <div class="num">~10y</div>
+        <h3>Money doubles</h3>
+        <p>At ~7% nominal returns, the Rule of 72 says your money roughly doubles every decade. Basic finance — not magic.</p>
+      </div>
+      <div class="why-item">
+        <div class="num">7×</div>
+        <h3>Stocks beat savings</h3>
+        <p>Long-run global stocks: ~7%/yr. EU savings: ~1%. Over 10 years that gap is the difference between a flight and a full trip.</p>
+      </div>
+      <div class="why-item">
+        <div class="num">€25</div>
+        <h3>Start small</h3>
+        <p>You don't need a windfall. €25/month for 10 years grows to ~€4,300 — a real trip, funded by your future self.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>€1,000 today → 2036</h2>
+    <p class="lede-2">Same money. Two strategies. Wildly different trips.</p>
+    <div class="chart-card">
+      <div class="chart-head">
+        <h3>Projected value over 10 years</h3>
+        <div class="legend">
+          <span class="legend-item"><i class="dot dot-savings"></i>Savings (~1%)</span>
+          <span class="legend-item"><i class="dot dot-invest"></i>Invested (~7%)</span>
+        </div>
+      </div>
+      <svg id="chart" viewBox="0 0 600 320" role="img"
+           aria-label="Line chart comparing €1,000 saved at 1% vs invested at 7% over ten years"></svg>
+      <p class="chart-foot">
+        Long-run global-stock returns (~7% nominal) vs. typical EU savings (~1%). Past performance ≠ guarantee.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <h3>Tell us your trip</h3>
+          <p>Where do you want to wake up in 2036, and roughly what'll it cost?</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <h3>Open an account</h3>
+          <p>Quick onboarding — name, birthday, KYC. Built on Alpaca's sandbox.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <h3>Fund &amp; invest</h3>
+          <p>Pick what you can spare. We split it across global stocks, bonds and gold.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="chat-section">
+    <h2>Talk to TripVest</h2>
+    <p class="lede-2">Tell it your dream trip. It'll math out the rest.</p>
+    <div class="chat-card" aria-label="TripVest chat">
       <div class="chat-head">
-        <strong>✈️ Talk to TripVest</strong>
+        <strong>✈️ TripVest</strong>
         <span class="live">live</span>
       </div>
       <div id="chat-log" class="chat-log" aria-live="polite"></div>
@@ -188,215 +458,212 @@
         <input id="chat-input" placeholder="Type a message…" autocomplete="off" />
         <button id="chat-send" type="submit">Send</button>
       </form>
-    </section>
-    <a class="chat-link" href="/chat.html">Open in full screen ↗</a>
-
-    <section class="chart-card" aria-label="Savings vs investing chart">
-      <div class="chart-head">
-        <h2>€1,000 today → 2036</h2>
-        <div class="legend">
-          <span class="legend-item"><i class="dot dot-savings"></i>Savings (~1%)</span>
-          <span class="legend-item"><i class="dot dot-invest"></i>Invested (~7%)</span>
-        </div>
-      </div>
-      <svg id="chart" viewBox="0 0 600 300" role="img"
-           aria-label="Line chart comparing €1,000 saved at 1% vs invested at 7% over ten years"></svg>
-      <p class="chart-foot">
-        Based on long-run global-stock returns (~7% nominal) vs. typical
-        EU savings rates (~1%). Past performance isn't a guarantee.
-      </p>
-    </section>
-
-    <section class="steps" aria-label="How it works">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div>
-          <h3>Tell us your dream trip</h3>
-          <p>Where do you want to wake up in 2036, and roughly what'll it cost?</p>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div>
-          <h3>Open a real (sandbox) account</h3>
-          <p>Quick onboarding — name, birthday, a few KYC questions. Built on Alpaca's sandbox.</p>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div>
-          <h3>Fund &amp; invest</h3>
-          <p>Pick what you can spare today. We split it across global stocks, bonds and gold.</p>
-        </div>
-      </div>
-    </section>
-
-    <script>
-      (function () {
-        var svg = document.getElementById('chart');
-        if (!svg) return;
-        var W = 600, H = 300, padL = 56, padR = 16, padT = 16, padB = 36;
-        var iw = W - padL - padR, ih = H - padT - padB;
-        var YEAR_START = 2026, YEARS = 10, P = 1000, RS = 0.01, RI = 0.07;
-
-        var data = [];
-        for (var i = 0; i <= YEARS; i++) {
-          data.push({
-            year: YEAR_START + i,
-            s: P * Math.pow(1 + RS, i),
-            v: P * Math.pow(1 + RI, i),
-          });
-        }
-        var maxY = data[YEARS].v;          // ~1967
-        var minY = P;                       // 1000
-
-        function x(i) { return padL + (i / YEARS) * iw; }
-        function y(val) { return padT + ih - ((val - minY) / (maxY - minY)) * ih; }
-        function fmt(n) { return '€' + Math.round(n).toLocaleString('en-US'); }
-
-        // Helpers
-        var NS = 'http://www.w3.org/2000/svg';
-        function el(tag, attrs) {
-          var n = document.createElementNS(NS, tag);
-          for (var k in attrs) n.setAttribute(k, attrs[k]);
-          return n;
-        }
-
-        // Y gridlines (4 lines including baseline)
-        var ticks = 4;
-        for (var t = 0; t <= ticks; t++) {
-          var v = minY + (maxY - minY) * (t / ticks);
-          var yy = y(v);
-          svg.appendChild(el('line', {
-            x1: padL, x2: W - padR, y1: yy, y2: yy,
-            stroke: '#e4e4e7', 'stroke-width': 1,
-          }));
-          var lbl = el('text', {
-            x: padL - 8, y: yy + 4,
-            'text-anchor': 'end', 'font-size': 11, fill: '#71717a',
-          });
-          lbl.textContent = fmt(v);
-          svg.appendChild(lbl);
-        }
-
-        // X axis labels (start, mid, end)
-        [0, Math.floor(YEARS / 2), YEARS].forEach(function (i) {
-          var lbl = el('text', {
-            x: x(i), y: H - 12,
-            'text-anchor': 'middle', 'font-size': 11, fill: '#71717a',
-          });
-          lbl.textContent = data[i].year;
-          svg.appendChild(lbl);
-        });
-
-        // Build line path
-        function path(key, color, width) {
-          var d = data.map(function (p, i) {
-            return (i ? 'L' : 'M') + x(i) + ' ' + y(p[key]);
-          }).join(' ');
-          svg.appendChild(el('path', {
-            d: d, fill: 'none', stroke: color, 'stroke-width': width,
-            'stroke-linecap': 'round', 'stroke-linejoin': 'round',
-          }));
-        }
-        path('s', '#a1a1aa', 2);
-        path('v', '#0f766e', 3);
-
-        // Endpoint dots + value labels
-        function endLabel(key, color, anchorY) {
-          var i = YEARS, cx = x(i), cy = y(data[i][key]);
-          svg.appendChild(el('circle', { cx: cx, cy: cy, r: 4, fill: color }));
-          var t = el('text', {
-            x: cx - 6, y: cy + anchorY,
-            'text-anchor': 'end', 'font-size': 12, 'font-weight': 600, fill: color,
-          });
-          t.textContent = fmt(data[i][key]);
-          svg.appendChild(t);
-        }
-        endLabel('v', '#0f766e', -8);
-        endLabel('s', '#71717a', 18);
-      })();
-    </script>
-
-    <div class="small">
-      <p><strong>Sandbox demo only.</strong> No real money, no real trades. Built on Alpaca's sandbox brokerage API.</p>
-      <p>Illustrative ~7% returns based on the Rule of 72. Not financial advice.</p>
     </div>
+    <a class="chat-link" href="/chat.html">Open in full screen ↗</a>
+  </section>
 
-    <script>
-      (function () {
-        var apiOverride = new URLSearchParams(location.search).get("api");
-        var API = (apiOverride || window.TRIPVEST_API || "").replace(/\/$/, "");
-        var configured = API && !API.includes("YOUR-RENDER-URL");
-
-        var log = document.getElementById("chat-log");
-        var form = document.getElementById("chat-form");
-        var input = document.getElementById("chat-input");
-        var sendBtn = document.getElementById("chat-send");
-        var history = [];
-        var threadId = null;
-
-        function bubble(role, text, extra) {
-          var el = document.createElement("div");
-          el.className = "chat-msg " + role + (extra ? " " + extra : "");
-          el.textContent = text;
-          log.appendChild(el);
-          log.scrollTop = log.scrollHeight;
-          return el;
-        }
-
-        if (!configured) {
-          bubble("bot", "Chat backend not configured yet — set TRIPVEST_API in config.js once Render is deployed.", "error");
-          input.disabled = true; sendBtn.disabled = true;
-          return;
-        }
-
-        async function send(message) {
-          bubble("user", message);
-          history.push({ role: "user", content: message });
-          var thinking = bubble("bot", "thinking…", "thinking");
-          sendBtn.disabled = true; input.disabled = true;
-          try {
-            var r = await fetch(API + "/api/chat/send", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                message: message,
-                history: history.slice(0, -1),
-                thread_id: threadId,
-              }),
-            });
-            var data = await r.json();
-            thinking.remove();
-            if (!r.ok) {
-              bubble("bot", data.error || "Server error", "error");
-              return;
-            }
-            threadId = data.thread_id || threadId;
-            bubble("bot", data.reply || "(no reply)");
-            history.push({ role: "assistant", content: data.reply || "" });
-          } catch (e) {
-            thinking.remove();
-            bubble("bot", "Network error: " + e.message + " (backend may be cold-starting — try again in 30s)", "error");
-          } finally {
-            sendBtn.disabled = false; input.disabled = false;
-            input.focus();
-          }
-        }
-
-        form.addEventListener("submit", function (e) {
-          e.preventDefault();
-          var v = input.value.trim();
-          if (!v) return;
-          input.value = "";
-          send(v);
-        });
-
-        // Auto-greet on load — also warms up the Render dyno.
-        send("Hi");
-      })();
-    </script>
-  </main>
+  <div class="small">
+    <p><strong>Sandbox demo only.</strong> No real money, no real trades. Built on Alpaca's sandbox brokerage API.</p>
+    <p>Illustrative ~7% returns based on the Rule of 72. Not financial advice.</p>
+  </div>
 </div>
+
+<script>
+  // === Interactive trip → today/future comparison ===
+  (function () {
+    var trips = document.getElementById('trips');
+    var slider = document.getElementById('trip-slider');
+    var amtToday = document.getElementById('amt-today');
+    var amtMonthly = document.getElementById('amt-monthly');
+    var amtFuture = document.getElementById('amt-future');
+
+    var R = 0.07, YEARS = 10;
+    var growth = Math.pow(1 + R, YEARS); // ~1.967
+
+    function fmt(n) { return '€' + Math.round(n).toLocaleString('en-US'); }
+
+    function monthlyForTarget(target) {
+      var r = R / 12, n = YEARS * 12;
+      return target / ((Math.pow(1 + r, n) - 1) / r);
+    }
+
+    function update(target) {
+      target = Math.round(target);
+      amtToday.textContent = fmt(target / growth);
+      amtFuture.textContent = fmt(target);
+      amtMonthly.textContent = fmt(monthlyForTarget(target));
+    }
+
+    trips.addEventListener('click', function (e) {
+      var btn = e.target.closest('.trip-chip');
+      if (!btn) return;
+      [].forEach.call(trips.querySelectorAll('.trip-chip'), function (c) { c.classList.remove('active'); });
+      btn.classList.add('active');
+      var cost = +btn.dataset.cost;
+      slider.value = cost;
+      update(cost);
+    });
+
+    slider.addEventListener('input', function () {
+      [].forEach.call(trips.querySelectorAll('.trip-chip'), function (c) { c.classList.remove('active'); });
+      update(+slider.value);
+    });
+
+    update(+slider.value);
+
+    document.getElementById('start-cta').addEventListener('click', function () {
+      var section = document.getElementById('chat-section');
+      section.scrollIntoView({ behavior: 'smooth' });
+      setTimeout(function () { document.getElementById('chat-input').focus(); }, 600);
+    });
+  })();
+
+  // === Chart ===
+  (function () {
+    var svg = document.getElementById('chart');
+    if (!svg) return;
+    var W = 600, H = 320, padL = 56, padR = 16, padT = 24, padB = 36;
+    var iw = W - padL - padR, ih = H - padT - padB;
+    var YEAR_START = 2026, YEARS = 10, P = 1000, RS = 0.01, RI = 0.07;
+
+    var data = [];
+    for (var i = 0; i <= YEARS; i++) {
+      data.push({ year: YEAR_START + i, s: P * Math.pow(1 + RS, i), v: P * Math.pow(1 + RI, i) });
+    }
+    var maxY = data[YEARS].v;
+    var minY = P;
+
+    function x(i) { return padL + (i / YEARS) * iw; }
+    function y(val) { return padT + ih - ((val - minY) / (maxY - minY)) * ih; }
+    function fmt(n) { return '€' + Math.round(n).toLocaleString('en-US'); }
+
+    var NS = 'http://www.w3.org/2000/svg';
+    function el(tag, attrs, text) {
+      var n = document.createElementNS(NS, tag);
+      for (var k in attrs) n.setAttribute(k, attrs[k]);
+      if (text != null) n.textContent = text;
+      return n;
+    }
+
+    // Gradient defs
+    var defs = el('defs');
+    var grad = el('linearGradient', { id: 'fillGrad', x1: 0, x2: 0, y1: 0, y2: 1 });
+    grad.appendChild(el('stop', { offset: '0%', 'stop-color': '#0f766e', 'stop-opacity': 0.18 }));
+    grad.appendChild(el('stop', { offset: '100%', 'stop-color': '#0f766e', 'stop-opacity': 0 }));
+    defs.appendChild(grad);
+    svg.appendChild(defs);
+
+    // Y gridlines
+    var ticks = 4;
+    for (var t = 0; t <= ticks; t++) {
+      var v = minY + (maxY - minY) * (t / ticks);
+      var yy = y(v);
+      svg.appendChild(el('line', { x1: padL, x2: W - padR, y1: yy, y2: yy, stroke: '#e7e5e4', 'stroke-width': 1 }));
+      svg.appendChild(el('text', { x: padL - 8, y: yy + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#78716c' }, fmt(v)));
+    }
+
+    // X labels
+    [0, Math.floor(YEARS / 2), YEARS].forEach(function (i) {
+      svg.appendChild(el('text', { x: x(i), y: H - 12, 'text-anchor': 'middle', 'font-size': 11, fill: '#78716c' }, data[i].year));
+    });
+
+    // Filled area under invested curve
+    var areaPath = data.map(function (p, i) { return (i ? 'L' : 'M') + x(i) + ' ' + y(p.v); }).join(' ')
+      + ' L' + x(YEARS) + ' ' + (padT + ih) + ' L' + x(0) + ' ' + (padT + ih) + ' Z';
+    svg.appendChild(el('path', { d: areaPath, fill: 'url(#fillGrad)' }));
+
+    function path(key, color, width, dashed) {
+      var d = data.map(function (p, i) { return (i ? 'L' : 'M') + x(i) + ' ' + y(p[key]); }).join(' ');
+      var attrs = { d: d, fill: 'none', stroke: color, 'stroke-width': width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
+      if (dashed) attrs['stroke-dasharray'] = '4 5';
+      svg.appendChild(el('path', attrs));
+    }
+    path('s', '#a8a29e', 2, true);
+    path('v', '#0f766e', 3);
+
+    // Endpoint dots + labels
+    function endLabel(key, color, anchorY, weight) {
+      var i = YEARS, cx = x(i), cy = y(data[i][key]);
+      svg.appendChild(el('circle', { cx: cx, cy: cy, r: 5, fill: '#fff', stroke: color, 'stroke-width': 2 }));
+      svg.appendChild(el('text', { x: cx - 8, y: cy + anchorY, 'text-anchor': 'end', 'font-size': 13, 'font-weight': weight || 700, fill: color }, fmt(data[i][key])));
+    }
+    endLabel('v', '#0f766e', -10, 700);
+    endLabel('s', '#78716c', 18, 600);
+
+    // "≈ 2× your money" callout near the invested endpoint
+    var endX = x(YEARS), endY = y(data[YEARS].v);
+    var calloutX = endX - 14, calloutY = endY - 30;
+    svg.appendChild(el('text', {
+      x: calloutX, y: calloutY,
+      'text-anchor': 'end', 'font-size': 11, 'font-weight': 700, fill: '#9a3412'
+    }, '≈ 2× your money'));
+  })();
+
+  // === Chat ===
+  (function () {
+    var apiOverride = new URLSearchParams(location.search).get("api");
+    var API = (apiOverride || window.TRIPVEST_API || "").replace(/\/$/, "");
+    var configured = API && !API.includes("YOUR-RENDER-URL");
+
+    var log = document.getElementById("chat-log");
+    var form = document.getElementById("chat-form");
+    var input = document.getElementById("chat-input");
+    var sendBtn = document.getElementById("chat-send");
+    var history = [];
+    var threadId = null;
+
+    function bubble(role, text, extra) {
+      var el = document.createElement("div");
+      el.className = "chat-msg " + role + (extra ? " " + extra : "");
+      el.textContent = text;
+      log.appendChild(el);
+      log.scrollTop = log.scrollHeight;
+      return el;
+    }
+
+    if (!configured) {
+      bubble("bot", "Chat backend not configured yet — set TRIPVEST_API in config.js once Render is deployed.", "error");
+      input.disabled = true; sendBtn.disabled = true;
+      return;
+    }
+
+    async function send(message) {
+      bubble("user", message);
+      history.push({ role: "user", content: message });
+      var thinking = bubble("bot", "thinking…", "thinking");
+      sendBtn.disabled = true; input.disabled = true;
+      try {
+        var r = await fetch(API + "/api/chat/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: message, history: history.slice(0, -1), thread_id: threadId }),
+        });
+        var data = await r.json();
+        thinking.remove();
+        if (!r.ok) { bubble("bot", data.error || "Server error", "error"); return; }
+        threadId = data.thread_id || threadId;
+        bubble("bot", data.reply || "(no reply)");
+        history.push({ role: "assistant", content: data.reply || "" });
+      } catch (e) {
+        thinking.remove();
+        bubble("bot", "Network error: " + e.message + " (backend may be cold-starting — try again in 30s)", "error");
+      } finally {
+        sendBtn.disabled = false; input.disabled = false;
+        input.focus();
+      }
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var v = input.value.trim();
+      if (!v) return;
+      input.value = "";
+      send(v);
+    });
+
+    // Auto-greet on load — also warms up the Render dyno.
+    send("Hi! Give me more info — how do I get my trip in 10 years for half the price?");
+  })();
+</script>
 </body>
 </html>
