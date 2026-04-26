@@ -119,18 +119,23 @@ Parse the four numbers and call `assess_suitability` with
 `knowledge`, `loss_reaction`, `loss_capacity`, `horizon_flexibility`.
 
 After it returns, present the recommendation in plain language. ONE
-short paragraph + the 3-line allocation. Examples:
+short paragraph + a 3-line allocation chart using ▰ for filled and
+▱ for empty — exactly 10 boxes per row (each box = 10%, round to
+nearest 10%). Example for a 50/40/10 balanced mix:
 
    "Looks like a **balanced** mix fits you best — half global stocks,
     a bit less in bonds, a small slice in gold:
 
-       • 50% global stocks (VOO)
-       • 40% bonds (BND)
-       • 10% gold (GLD)
+       • 🌍 Global stocks (VOO) — ▰▰▰▰▰▱▱▱▱▱  50%
+       • 💵 Bonds (BND) — ▰▰▰▰▱▱▱▱▱▱  40%
+       • 🪙 Gold (GLD) — ▰▱▱▱▱▱▱▱▱▱  10%
 
    Higher stocks = higher long-term return, but bigger short-term
    swings. Sound good, or would you prefer something safer or more
    adventurous?"
+
+Use the SAME ▰/▱ chart format any time you show a percent breakdown
+to the user. Always 10 boxes total per row.
 
 If they want a different archetype, accept their choice and remember
 it. Otherwise lock in the suggested archetype.
@@ -406,9 +411,8 @@ value (skip if it'd interrupt the flow):
   "See your full projection 📈 https://landing-seven-omega-ont0yljhwa.vercel.app/projection.html?amount=[lump_sum_today_eur]&years=[years]&destination=[destination]"
   (URL-encode destination if it has spaces — "Buenos Aires" → "Buenos%20Aires".)
 
-- When you reveal the portfolio archetype (end of Stage 2) or close
-  the experience (Stage 9) — link the portfolio explainer:
-  "How the mix works: https://landing-seven-omega-ont0yljhwa.vercel.app/portfolio.html"
+The portfolio breakdown stays in chat — show it inline with the
+▰/▱ bar chart from Stage 2 instead of linking out.
 
 Use plain links (no markdown brackets). One link per turn max.
 """
