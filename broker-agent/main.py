@@ -17,6 +17,7 @@ Everything else is split out so multiple teammates can work in parallel:
 import json
 import logging
 import os
+import re
 import threading
 import uuid
 from pathlib import Path
@@ -290,6 +291,13 @@ async def _custom_chat_send(req: Request):
     await process_message(msg)
     stream = DevStreamClient.get_stream(channel)
     reply = stream.get("full_response") or "(no reply)"
+    # DevStreamClient captures everything emitted to the channel, including
+    # Orca's loading-state pseudo-events ([orca.loading.<kind>.start/end])
+    # that are meant for the hosted UI. Strip them so the browser sees a
+    # clean reply.
+    reply = re.sub(r"\[orca\.[^\]]*\]", "", reply).strip()
+    if not reply:
+        reply = "(no reply)"
     return {"reply": reply, "thread_id": msg.thread_id}
 
 
