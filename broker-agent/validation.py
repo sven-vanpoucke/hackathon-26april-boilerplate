@@ -1,4 +1,4 @@
-"""User-input validators for TripVest tool calls.
+"""User-input validators for Midora tool calls.
 
 `ValidationError` carries a user-facing message in `str(exc)` — main.py
 catches it and feeds the message back as the tool result so the LLM

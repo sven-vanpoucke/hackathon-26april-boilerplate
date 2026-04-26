@@ -1,4 +1,4 @@
-"""Alpaca Broker API operations for TripVest.
+"""Alpaca Broker API operations for Midora.
 
 All Alpaca-touching code lives here — KYC, suitability, ACH funding,
 order placement, portfolio queries. Each public function maps 1:1 to
@@ -83,7 +83,7 @@ def _assert_sandbox(broker: BrokerClient) -> None:
     if "sandbox" in base_url.lower():
         return
     raise RuntimeError(
-        "TripVest onboarding requires a sandbox BrokerClient until production review."
+        "Midora onboarding requires a sandbox BrokerClient until production review."
     )
 
 

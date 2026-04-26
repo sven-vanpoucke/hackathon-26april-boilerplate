@@ -1,4 +1,4 @@
-"""OpenAI function-calling schema for TripVest tools.
+"""OpenAI function-calling schema for Midora tools.
 
 This file lists the LLM-facing tool definitions only — names,
 descriptions, and parameter schemas. The actual implementations

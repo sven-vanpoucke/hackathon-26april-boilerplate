@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Your projection — TripVest</title>
+<title>Your projection — Midora</title>
 <meta name="description" content="See how your money could grow over time." />
 <style>
   :root {
@@ -82,7 +82,7 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="brand"><a href="/"><span>✈️</span>TripVest</a></div>
+    <div class="brand"><a href="/"><span>✈️</span>Midora</a></div>
     <div class="badge">your projection</div>
   </header>
 
@@ -151,7 +151,7 @@
     // Title + subline
     if (destination) {
       document.getElementById('title').textContent = 'Your ' + destination + ' fund, projected';
-      document.title = 'Your ' + destination + ' projection — TripVest';
+      document.title = 'Your ' + destination + ' projection — Midora';
     }
     document.getElementById('chart-title').textContent = fmt(amount) + ' over ' + years + ' year' + (years === 1 ? '' : 's');
     document.getElementById('stat-future-label').textContent = 'In ' + FUTURE_YEAR + ' (invested)';

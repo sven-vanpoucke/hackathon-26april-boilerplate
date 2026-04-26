@@ -1,4 +1,4 @@
-"""Static configuration for the TripVest broker agent.
+"""Static configuration for the Midora broker agent.
 
 Edit constants here when tuning model choice, retry budget, or the
 portfolio archetypes. No business logic — pure values.

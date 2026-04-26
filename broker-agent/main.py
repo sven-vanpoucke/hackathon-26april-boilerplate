@@ -1,4 +1,4 @@
-"""TripVest broker agent — Orca entry point and Anthropic tool-use loop.
+"""Midora broker agent — Orca entry point and Anthropic tool-use loop.
 
 Owns:
   - request handling (Orca session lifecycle)
@@ -83,6 +83,127 @@ def _get_message_id(data) -> str | None:
     return None
 
 
+# ─────────────────────────────────────────────────────────────────────────
+# Session state — keeps account_id / ach_relationship_id / archetype across
+# turns so the LLM can't drop them on the floor between Stage 8 (bank link)
+# and Stage 9 (fund + invest). Source of truth is the dict, not chat text.
+# ─────────────────────────────────────────────────────────────────────────
+
+_STATE_KEYS = ("account_id", "ach_relationship_id", "archetype")
+
+# Tool name → arg names that may be filled from session state when the
+# model omits them.
+_STATE_FILLS: dict[str, tuple[str, ...]] = {
+    "setup_bank_funding": ("account_id",),
+    "transfer_funds": ("account_id", "ach_relationship_id"),
+    "invest_portfolio": ("account_id", "archetype"),
+    "get_portfolio": ("account_id",),
+}
+
+_session_state: dict[str, dict[str, Any]] = {}
+_session_state_lock = threading.Lock()
+
+_UUID_RE = re.compile(
+    r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b",
+    re.IGNORECASE,
+)
+_ARCHETYPE_RE = re.compile(r"\b(conservative|balanced|growth)\b", re.IGNORECASE)
+
+
+def _get_state(thread_id: str) -> dict[str, Any]:
+    if not thread_id:
+        return {}
+    with _session_state_lock:
+        return dict(_session_state.get(thread_id, {}))
+
+
+def _update_state(thread_id: str, updates: dict[str, Any]) -> None:
+    if not thread_id or not updates:
+        return
+    with _session_state_lock:
+        existing = _session_state.setdefault(thread_id, {})
+        for k, v in updates.items():
+            if v:
+                existing[k] = v
+
+
+def _extract_state_from_result(result: Any) -> dict[str, Any]:
+    if not isinstance(result, dict):
+        return {}
+    return {k: result[k] for k in _STATE_KEYS if result.get(k)}
+
+
+def _fill_args_from_state(name: str, args: dict, state: dict) -> dict:
+    keys = _STATE_FILLS.get(name)
+    if not keys:
+        return args
+    out = dict(args)
+    for key in keys:
+        if not out.get(key) and state.get(key):
+            out[key] = state[key]
+    return out
+
+
+def _state_addendum(state: dict) -> str:
+    if not any(state.get(k) for k in _STATE_KEYS):
+        return ""
+    lines = [
+        "",
+        "═══════════════════════════════════════════════════════",
+        "SESSION STATE — already established this conversation.",
+        "Pass these to tools verbatim; do NOT ask the user again.",
+        "═══════════════════════════════════════════════════════",
+    ]
+    if state.get("account_id"):
+        lines.append(f"- account_id = {state['account_id']}")
+    if state.get("ach_relationship_id"):
+        lines.append(f"- ach_relationship_id = {state['ach_relationship_id']}")
+    if state.get("archetype"):
+        lines.append(f"- archetype = {state['archetype']}")
+    return "\n".join(lines)
+
+
+def _seed_state_from_history(thread_id: str, messages: list) -> None:
+    """Best-effort recovery if the in-memory store was lost (server restart).
+    Scans prior assistant text for UUIDs and archetype mentions. Heuristic:
+    first distinct UUID = account_id (announced first in Stage 7), second =
+    ach_relationship_id (Stage 8). Only fills slots that aren't already set."""
+    if not thread_id:
+        return
+    state = _get_state(thread_id)
+    if all(state.get(k) for k in _STATE_KEYS):
+        return
+
+    text_parts = []
+    for m in messages:
+        c = m.get("content")
+        if m.get("role") == "assistant" and isinstance(c, str):
+            text_parts.append(c)
+    text = "\n".join(text_parts)
+    if not text:
+        return
+
+    updates: dict[str, Any] = {}
+
+    if not state.get("archetype"):
+        archetype_hits = _ARCHETYPE_RE.findall(text)
+        if archetype_hits:
+            # Last mention wins — covers the case where the user switched.
+            updates["archetype"] = archetype_hits[-1].lower()
+
+    if not state.get("account_id") or not state.get("ach_relationship_id"):
+        seen: list[str] = []
+        for u in _UUID_RE.findall(text):
+            if u not in seen:
+                seen.append(u)
+        if seen and not state.get("account_id"):
+            updates["account_id"] = seen[0]
+        if len(seen) > 1 and not state.get("ach_relationship_id"):
+            updates["ach_relationship_id"] = seen[1]
+
+    _update_state(thread_id, updates)
+
+
 async def process_message(data: ChatMessage):
     handler = OrcaHandler()
     session = handler.begin(data)
@@ -151,15 +272,19 @@ async def process_message(data: ChatMessage):
                 messages.append({"role": role, "content": content})
         messages.append({"role": "user", "content": data.message})
 
+        thread_id = str(getattr(data, "thread_id", "") or "")
+        _seed_state_from_history(thread_id, messages)
+
         total_input_tokens = 0
         total_output_tokens = 0
         final_text = ""
 
         for _ in range(MAX_TOOL_TURNS):
+            state = _get_state(thread_id)
             response = client.messages.create(
                 model=MODEL,
                 max_tokens=4096,
-                system=SYSTEM_PROMPT,
+                system=SYSTEM_PROMPT + _state_addendum(state),
                 tools=_ANTHROPIC_TOOLS,
                 messages=messages,
             )
@@ -187,13 +312,21 @@ async def process_message(data: ChatMessage):
                     continue
                 kind = f"running {block.name}"
                 session.loading.start(kind)
+                # Refresh state inside the loop — a prior block in this
+                # same response may have produced new IDs (e.g. setup_bank
+                # → transfer_funds in one turn).
+                current_state = _get_state(thread_id)
+                filled_args = _fill_args_from_state(
+                    block.name, dict(block.input), current_state
+                )
                 try:
-                    result = run_tool(broker, block.name, block.input)
+                    result = run_tool(broker, block.name, filled_args)
                 except ValidationError as exc:
                     result = {"error": str(exc)}
                 except Exception as exc:
                     logger.exception("tool %s failed", block.name)
                     result = {"error": str(exc)}
+                _update_state(thread_id, _extract_state_from_result(result))
                 session.loading.end(kind)
                 tool_results.append({
                     "type": "tool_result",
@@ -223,7 +356,7 @@ async def process_message(data: ChatMessage):
 
 app, orca = create_agent_app(
     process_message_func=process_message,
-    title="TripVest Advisor",
+    title="Midora Advisor",
     description=(
         "Friendly investment advisor for students 18–25 — opens a real "
         "Alpaca sandbox account, funds via ACH, and invests in a "
