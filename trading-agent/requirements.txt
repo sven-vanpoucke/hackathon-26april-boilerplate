@@ -2,3 +2,5 @@ orca-platform-sdk-ui
 uvicorn
 fastapi
 alpaca-py
+anthropic
+openai
