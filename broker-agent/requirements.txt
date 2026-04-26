@@ -4,3 +4,4 @@ fastapi
 alpaca-py
 anthropic
 python-dateutil
+python-dotenv
