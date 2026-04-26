@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>TripVest — your 2036 trip, half-priced</title>
+<meta name="description" content="Save for a future trip. Your money roughly doubles in 10 years — start with €25 today and your 2036 trip is effectively half-price." />
+<style>
+  :root {
+    --bg: #fafaf9;
+    --fg: #18181b;
+    --muted: #71717a;
+    --accent: #0f766e;
+    --accent-hover: #115e59;
+    --border: #e4e4e7;
+    --card: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 56px;
+  }
+  .brand { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
+  .brand span { margin-right: 6px; }
+  .badge {
+    font-size: 12px; color: var(--muted);
+    border: 1px solid var(--border); border-radius: 999px;
+    padding: 4px 10px; background: var(--card);
+  }
+  h1 {
+    font-size: clamp(32px, 7vw, 48px);
+    line-height: 1.1; letter-spacing: -0.02em;
+    margin: 0 0 16px;
+  }
+  .lede {
+    font-size: clamp(16px, 4vw, 18px);
+    color: var(--muted);
+    max-width: 540px;
+    margin: 0 0 32px;
+  }
+  .cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent); color: #fff;
+    padding: 14px 22px; border-radius: 999px;
+    text-decoration: none; font-weight: 600; font-size: 16px;
+    transition: background 120ms;
+  }
+  .cta:hover { background: var(--accent-hover); }
+  .cta:active { transform: translateY(1px); }
+  .cta-note { display: block; font-size: 13px; color: var(--muted); margin-top: 12px; }
+  section.steps {
+    margin-top: 72px;
+    display: grid; gap: 16px;
+  }
+  .step {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px;
+    display: flex; gap: 16px; align-items: flex-start;
+  }
+  .step-num {
+    flex-shrink: 0;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+  }
+  .step h3 { margin: 2px 0 4px; font-size: 16px; }
+  .step p { margin: 0; color: var(--muted); font-size: 15px; }
+  .chart-card {
+    margin-top: 48px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px;
+  }
+  .chart-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+  .chart-head h2 { margin: 0; font-size: 16px; font-weight: 600; }
+  .legend { display: flex; gap: 14px; font-size: 13px; color: var(--muted); }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .dot-savings { background: #a1a1aa; }
+  .dot-invest { background: var(--accent); }
+  #chart { display: block; width: 100%; height: auto; }
+  .chart-foot { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+  .small {
+    margin-top: 56px;
+    padding-top: 24px; border-top: 1px solid var(--border);
+    font-size: 13px; color: var(--muted);
+  }
+  .small p { margin: 0 0 6px; }
+  @media (min-width: 640px) {
+    .wrap { padding: 56px 32px 100px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><span>✈️</span>TripVest</div>
+    <div class="badge">sandbox demo</div>
+  </header>
+
+  <main>
+    <h1>Your 2036 trip, <br/>half-priced.</h1>
+    <p class="lede">
+      Invest a little today. Your money roughly doubles over ~10 years,
+      so the dream trip you want in 2036 effectively costs half what it
+      does now — when you start today.
+    </p>
+
+    <a class="cta"
+       href="/chat.html">
+      Start your trip fund
+      <span aria-hidden="true">→</span>
+    </a>
+    <span class="cta-note">Opens a chat — takes about 3 minutes.</span>
+
+    <section class="chart-card" aria-label="Savings vs investing chart">
+      <div class="chart-head">
+        <h2>€1,000 today → 2036</h2>
+        <div class="legend">
+          <span class="legend-item"><i class="dot dot-savings"></i>Savings (~1%)</span>
+          <span class="legend-item"><i class="dot dot-invest"></i>Invested (~7%)</span>
+        </div>
+      </div>
+      <svg id="chart" viewBox="0 0 600 300" role="img"
+           aria-label="Line chart comparing €1,000 saved at 1% vs invested at 7% over ten years"></svg>
+      <p class="chart-foot">
+        Based on long-run global-stock returns (~7% nominal) vs. typical
+        EU savings rates (~1%). Past performance isn't a guarantee.
+      </p>
+    </section>
+
+    <section class="steps" aria-label="How it works">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <h3>Tell us your dream trip</h3>
+          <p>Where do you want to wake up in 2036, and roughly what'll it cost?</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <h3>Open a real (sandbox) account</h3>
+          <p>Quick onboarding — name, birthday, a few KYC questions. Built on Alpaca's sandbox.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <h3>Fund &amp; invest</h3>
+          <p>Pick what you can spare today. We split it across global stocks, bonds and gold.</p>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      (function () {
+        var svg = document.getElementById('chart');
+        if (!svg) return;
+        var W = 600, H = 300, padL = 56, padR = 16, padT = 16, padB = 36;
+        var iw = W - padL - padR, ih = H - padT - padB;
+        var YEAR_START = 2026, YEARS = 10, P = 1000, RS = 0.01, RI = 0.07;
+
+        var data = [];
+        for (var i = 0; i <= YEARS; i++) {
+          data.push({
+            year: YEAR_START + i,
+            s: P * Math.pow(1 + RS, i),
+            v: P * Math.pow(1 + RI, i),
+          });
+        }
+        var maxY = data[YEARS].v;          // ~1967
+        var minY = P;                       // 1000
+
+        function x(i) { return padL + (i / YEARS) * iw; }
+        function y(val) { return padT + ih - ((val - minY) / (maxY - minY)) * ih; }
+        function fmt(n) { return '€' + Math.round(n).toLocaleString('en-US'); }
+
+        // Helpers
+        var NS = 'http://www.w3.org/2000/svg';
+        function el(tag, attrs) {
+          var n = document.createElementNS(NS, tag);
+          for (var k in attrs) n.setAttribute(k, attrs[k]);
+          return n;
+        }
+
+        // Y gridlines (4 lines including baseline)
+        var ticks = 4;
+        for (var t = 0; t <= ticks; t++) {
+          var v = minY + (maxY - minY) * (t / ticks);
+          var yy = y(v);
+          svg.appendChild(el('line', {
+            x1: padL, x2: W - padR, y1: yy, y2: yy,
+            stroke: '#e4e4e7', 'stroke-width': 1,
+          }));
+          var lbl = el('text', {
+            x: padL - 8, y: yy + 4,
+            'text-anchor': 'end', 'font-size': 11, fill: '#71717a',
+          });
+          lbl.textContent = fmt(v);
+          svg.appendChild(lbl);
+        }
+
+        // X axis labels (start, mid, end)
+        [0, Math.floor(YEARS / 2), YEARS].forEach(function (i) {
+          var lbl = el('text', {
+            x: x(i), y: H - 12,
+            'text-anchor': 'middle', 'font-size': 11, fill: '#71717a',
+          });
+          lbl.textContent = data[i].year;
+          svg.appendChild(lbl);
+        });
+
+        // Build line path
+        function path(key, color, width) {
+          var d = data.map(function (p, i) {
+            return (i ? 'L' : 'M') + x(i) + ' ' + y(p[key]);
+          }).join(' ');
+          svg.appendChild(el('path', {
+            d: d, fill: 'none', stroke: color, 'stroke-width': width,
+            'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+          }));
+        }
+        path('s', '#a1a1aa', 2);
+        path('v', '#0f766e', 3);
+
+        // Endpoint dots + value labels
+        function endLabel(key, color, anchorY) {
+          var i = YEARS, cx = x(i), cy = y(data[i][key]);
+          svg.appendChild(el('circle', { cx: cx, cy: cy, r: 4, fill: color }));
+          var t = el('text', {
+            x: cx - 6, y: cy + anchorY,
+            'text-anchor': 'end', 'font-size': 12, 'font-weight': 600, fill: color,
+          });
+          t.textContent = fmt(data[i][key]);
+          svg.appendChild(t);
+        }
+        endLabel('v', '#0f766e', -8);
+        endLabel('s', '#71717a', 18);
+      })();
+    </script>
+
+    <div class="small">
+      <p><strong>Sandbox demo only.</strong> No real money, no real trades. Built on Alpaca's sandbox brokerage API.</p>
+      <p>Illustrative ~7% returns based on the Rule of 72. Not financial advice.</p>
+    </div>
+  </main>
+</div>
+</body>
+</html>

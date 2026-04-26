@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Your projection — TripVest</title>
+<meta name="description" content="See how your money could grow over time." />
+<style>
+  :root {
+    --bg: #fafaf9; --fg: #18181b; --muted: #71717a;
+    --accent: #0f766e; --accent-hover: #115e59;
+    --border: #e4e4e7; --card: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .brand { font-weight: 700; font-size: 18px; }
+  .brand span { margin-right: 6px; }
+  .brand a { color: inherit; text-decoration: none; }
+  .badge {
+    font-size: 12px; color: var(--muted); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 10px; background: var(--card);
+  }
+  h1 {
+    font-size: clamp(24px, 6vw, 32px); line-height: 1.15;
+    letter-spacing: -0.02em; margin: 0 0 8px;
+  }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  .stats {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    margin: 24px 0;
+  }
+  .stat {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 16px;
+  }
+  .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .stat-val { font-size: clamp(20px, 5vw, 28px); font-weight: 700; margin-top: 4px; letter-spacing: -0.01em; }
+  .stat-delta { font-size: 13px; color: var(--accent); font-weight: 600; margin-top: 2px; }
+  .chart-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px; margin-top: 8px;
+  }
+  .chart-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+  .chart-head h2 { margin: 0; font-size: 16px; font-weight: 600; }
+  .legend { display: flex; gap: 14px; font-size: 13px; color: var(--muted); }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .dot-savings { background: #a1a1aa; }
+  .dot-invest { background: var(--accent); }
+  #chart { display: block; width: 100%; height: auto; }
+  .chart-foot { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+  .cta-row { display: flex; gap: 12px; align-items: center; margin-top: 28px; flex-wrap: wrap; }
+  .cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent); color: #fff;
+    padding: 12px 20px; border-radius: 999px;
+    text-decoration: none; font-weight: 600; font-size: 15px;
+    transition: background 120ms;
+  }
+  .cta:hover { background: var(--accent-hover); }
+  .cta-secondary {
+    color: var(--muted); text-decoration: none; font-size: 14px;
+  }
+  .cta-secondary:hover { color: var(--fg); }
+  .small {
+    margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--muted);
+  }
+  @media (min-width: 640px) { .wrap { padding: 56px 32px 100px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><a href="/"><span>✈️</span>TripVest</a></div>
+    <div class="badge">your projection</div>
+  </header>
+
+  <h1 id="title">Your trip fund, projected</h1>
+  <p class="sub" id="sub">Based on global-stock long-run returns (~7% nominal).</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Today</div>
+      <div class="stat-val" id="stat-today">€0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label" id="stat-future-label">In 2036</div>
+      <div class="stat-val" id="stat-future">€0</div>
+      <div class="stat-delta" id="stat-delta">+0%</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-head">
+      <h2 id="chart-title">€0 over 10 years</h2>
+      <div class="legend">
+        <span class="legend-item"><i class="dot dot-savings"></i>Savings (~1%)</span>
+        <span class="legend-item"><i class="dot dot-invest"></i>Invested (~7%)</span>
+      </div>
+    </div>
+    <svg id="chart" viewBox="0 0 600 300" role="img" aria-label="Projection chart"></svg>
+    <p class="chart-foot">
+      Based on long-run global-stock returns vs. typical EU savings rates.
+      Past performance isn't a guarantee.
+    </p>
+  </div>
+
+  <div class="cta-row">
+    <a class="cta" href="https://hacketon-26april.orcapt.com/conversation/broker-agent/new" target="_blank" rel="noopener noreferrer">
+      Start your trip fund
+      <span aria-hidden="true">→</span>
+    </a>
+    <a class="cta-secondary" href="/">← Back to overview</a>
+  </div>
+
+  <div class="small">
+    <p>Sandbox demo only. No real money, no real trades. Illustrative ~7% returns based on the Rule of 72. Not financial advice.</p>
+  </div>
+</div>
+
+<script>
+  (function () {
+    function num(name, def) {
+      var v = parseFloat(new URLSearchParams(location.search).get(name));
+      return isFinite(v) && v > 0 ? v : def;
+    }
+    function str(name, def) {
+      var v = new URLSearchParams(location.search).get(name);
+      return v ? v.trim() : def;
+    }
+    function fmt(n) { return '€' + Math.round(n).toLocaleString('en-US'); }
+
+    var amount = Math.min(num('amount', 1000), 1000000);
+    var years = Math.min(Math.max(num('years', 10), 1), 50);
+    var destination = str('destination', '');
+    var YEAR_START = new Date().getFullYear();
+    var FUTURE_YEAR = YEAR_START + years;
+    var RS = 0.01, RI = 0.07;
+
+    // Title + subline
+    if (destination) {
+      document.getElementById('title').textContent = 'Your ' + destination + ' fund, projected';
+      document.title = 'Your ' + destination + ' projection — TripVest';
+    }
+    document.getElementById('chart-title').textContent = fmt(amount) + ' over ' + years + ' year' + (years === 1 ? '' : 's');
+    document.getElementById('stat-future-label').textContent = 'In ' + FUTURE_YEAR + ' (invested)';
+    document.getElementById('stat-today').textContent = fmt(amount);
+
+    var future = amount * Math.pow(1 + RI, years);
+    var growth = ((future - amount) / amount) * 100;
+    document.getElementById('stat-future').textContent = fmt(future);
+    document.getElementById('stat-delta').textContent = '+' + Math.round(growth) + '% growth';
+
+    // Chart
+    var svg = document.getElementById('chart');
+    var W = 600, H = 300, padL = 64, padR = 16, padT = 16, padB = 36;
+    var iw = W - padL - padR, ih = H - padT - padB;
+    var data = [];
+    for (var i = 0; i <= years; i++) {
+      data.push({
+        year: YEAR_START + i,
+        s: amount * Math.pow(1 + RS, i),
+        v: amount * Math.pow(1 + RI, i),
+      });
+    }
+    var maxY = data[years].v, minY = amount;
+
+    function x(i) { return padL + (i / years) * iw; }
+    function y(val) { return padT + ih - ((val - minY) / (maxY - minY)) * ih; }
+
+    var NS = 'http://www.w3.org/2000/svg';
+    function el(tag, attrs) {
+      var n = document.createElementNS(NS, tag);
+      for (var k in attrs) n.setAttribute(k, attrs[k]);
+      return n;
+    }
+    var ticks = 4;
+    for (var t = 0; t <= ticks; t++) {
+      var v = minY + (maxY - minY) * (t / ticks);
+      var yy = y(v);
+      svg.appendChild(el('line', { x1: padL, x2: W - padR, y1: yy, y2: yy, stroke: '#e4e4e7', 'stroke-width': 1 }));
+      var lbl = el('text', { x: padL - 8, y: yy + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#71717a' });
+      lbl.textContent = fmt(v);
+      svg.appendChild(lbl);
+    }
+    var xticks = years <= 5 ? data.map(function (_, i) { return i; }) : [0, Math.floor(years / 2), years];
+    xticks.forEach(function (i) {
+      var lbl = el('text', { x: x(i), y: H - 12, 'text-anchor': 'middle', 'font-size': 11, fill: '#71717a' });
+      lbl.textContent = data[i].year;
+      svg.appendChild(lbl);
+    });
+    function path(key, color, width) {
+      var d = data.map(function (p, i) { return (i ? 'L' : 'M') + x(i) + ' ' + y(p[key]); }).join(' ');
+      svg.appendChild(el('path', { d: d, fill: 'none', stroke: color, 'stroke-width': width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+    }
+    path('s', '#a1a1aa', 2);
+    path('v', '#0f766e', 3);
+    function endLabel(key, color, anchorY) {
+      var i = years, cx = x(i), cy = y(data[i][key]);
+      svg.appendChild(el('circle', { cx: cx, cy: cy, r: 4, fill: color }));
+      var t = el('text', { x: cx - 6, y: cy + anchorY, 'text-anchor': 'end', 'font-size': 12, 'font-weight': 600, fill: color });
+      t.textContent = fmt(data[i][key]);
+      svg.appendChild(t);
+    }
+    endLabel('v', '#0f766e', -8);
+    endLabel('s', '#71717a', 18);
+  })();
+</script>
+</body>
+</html>

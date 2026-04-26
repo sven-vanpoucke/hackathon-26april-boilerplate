@@ -428,6 +428,9 @@ async def process_message(data: ChatMessage):
                 try:
                     args = json.loads(tc.function.arguments or "{}")
                     result = _run_tool(trading, tc.function.name, args)
+                except json.JSONDecodeError as exc:
+                    logger.warning("tool %s got invalid JSON args: %s", tc.function.name, exc)
+                    result = {"error": "Sorry, I had trouble reading those details — could you say them again?"}
                 except Exception as exc:
                     logger.exception("tool %s failed", tc.function.name)
                     result = {"error": str(exc)}

@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: tripvest-broker
+    runtime: python
+    plan: free
+    rootDir: broker-agent
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ALPACA_BROKER_API_KEY
+        sync: false
+      - key: ALPACA_BROKER_SECRET_KEY
+        sync: false
+      - key: ALPACA_BROKER_SANDBOX
+        value: "true"
+      - key: ORCA_DEV_MODE
+        value: "true"
+      - key: PYTHON_VERSION
+        value: "3.12"
