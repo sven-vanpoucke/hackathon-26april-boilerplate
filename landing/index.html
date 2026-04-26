@@ -339,11 +339,11 @@
     <div class="compare" id="compare">
       <p class="compare-head">Where do you want to wake up in 2036?</p>
       <div class="trips" id="trips">
-        <button class="trip-chip active" data-cost="4000">🗼 Tokyo · €4k</button>
-        <button class="trip-chip" data-cost="6000">🏔️ Patagonia · €6k</button>
-        <button class="trip-chip" data-cost="3000">❄️ Iceland · €3k</button>
-        <button class="trip-chip" data-cost="2500">🏝️ Bali · €2.5k</button>
-        <button class="trip-chip" data-cost="8000">🦁 Kenya safari · €8k</button>
+        <button class="trip-chip active" data-cost="4000" data-label="Tokyo">🗼 Tokyo · €4k</button>
+        <button class="trip-chip" data-cost="6000" data-label="Patagonia">🏔️ Patagonia · €6k</button>
+        <button class="trip-chip" data-cost="3000" data-label="Iceland">❄️ Iceland · €3k</button>
+        <button class="trip-chip" data-cost="2500" data-label="Bali">🏝️ Bali · €2.5k</button>
+        <button class="trip-chip" data-cost="8000" data-label="a Kenya safari">🦁 Kenya safari · €8k</button>
       </div>
 
       <div class="slider-wrap">
@@ -369,7 +369,7 @@
 
     <div class="cta-row">
       <button class="cta" id="start-cta">Start your trip fund →</button>
-      <a href="/chat.html" class="cta cta-secondary">Open full chat ↗</a>
+      <a href="/chat.html" class="cta cta-secondary chat-deep-link">Open full chat ↗</a>
     </div>
     <p class="cta-note">Sandbox demo · 3-min onboarding · no card needed.</p>
   </main>
@@ -459,7 +459,7 @@
         <button id="chat-send" type="submit">Send</button>
       </form>
     </div>
-    <a class="chat-link" href="/chat.html">Open in full screen ↗</a>
+    <a class="chat-link chat-deep-link" href="/chat.html">Open in full screen ↗</a>
   </section>
 
   <div class="small">
@@ -469,29 +469,43 @@
 </div>
 
 <script>
-  // === Interactive trip → today/future comparison ===
+  // === Trip picker + chat (shared selectedTrip state) ===
   (function () {
     var trips = document.getElementById('trips');
     var slider = document.getElementById('trip-slider');
     var amtToday = document.getElementById('amt-today');
     var amtMonthly = document.getElementById('amt-monthly');
     var amtFuture = document.getElementById('amt-future');
+    var deepLinks = document.querySelectorAll('.chat-deep-link');
+    var startCta = document.getElementById('start-cta');
+    var chatSection = document.getElementById('chat-section');
 
     var R = 0.07, YEARS = 10;
-    var growth = Math.pow(1 + R, YEARS); // ~1.967
+    var growth = Math.pow(1 + R, YEARS);
+
+    // Default mirrors the active chip in markup.
+    var selectedTrip = { cost: 4000, label: 'Tokyo' };
 
     function fmt(n) { return '€' + Math.round(n).toLocaleString('en-US'); }
-
     function monthlyForTarget(target) {
       var r = R / 12, n = YEARS * 12;
       return target / ((Math.pow(1 + r, n) - 1) / r);
     }
 
-    function update(target) {
-      target = Math.round(target);
-      amtToday.textContent = fmt(target / growth);
-      amtFuture.textContent = fmt(target);
-      amtMonthly.textContent = fmt(monthlyForTarget(target));
+    function syncDeepLinks() {
+      var params = [];
+      if (selectedTrip.label) params.push('trip=' + encodeURIComponent(selectedTrip.label));
+      if (selectedTrip.cost) params.push('cost=' + Math.round(selectedTrip.cost));
+      var url = '/chat.html' + (params.length ? '?' + params.join('&') : '');
+      [].forEach.call(deepLinks, function (a) { a.href = url; });
+    }
+
+    function refresh() {
+      var t = Math.round(selectedTrip.cost);
+      amtToday.textContent = fmt(t / growth);
+      amtFuture.textContent = fmt(t);
+      amtMonthly.textContent = fmt(monthlyForTarget(t));
+      syncDeepLinks();
     }
 
     trips.addEventListener('click', function (e) {
@@ -499,23 +513,121 @@
       if (!btn) return;
       [].forEach.call(trips.querySelectorAll('.trip-chip'), function (c) { c.classList.remove('active'); });
       btn.classList.add('active');
-      var cost = +btn.dataset.cost;
-      slider.value = cost;
-      update(cost);
+      selectedTrip = { cost: +btn.dataset.cost, label: btn.dataset.label || null };
+      slider.value = selectedTrip.cost;
+      refresh();
     });
 
     slider.addEventListener('input', function () {
       [].forEach.call(trips.querySelectorAll('.trip-chip'), function (c) { c.classList.remove('active'); });
-      update(+slider.value);
+      selectedTrip = { cost: +slider.value, label: null };
+      refresh();
     });
 
-    update(+slider.value);
+    refresh();
 
-    document.getElementById('start-cta').addEventListener('click', function () {
-      var section = document.getElementById('chat-section');
-      section.scrollIntoView({ behavior: 'smooth' });
-      setTimeout(function () { document.getElementById('chat-input').focus(); }, 600);
+    // ----- Chat -----
+    var apiOverride = new URLSearchParams(location.search).get("api");
+    var API = (apiOverride || window.TRIPVEST_API || "").replace(/\/$/, "");
+    var configured = API && !API.includes("YOUR-RENDER-URL");
+
+    var log = document.getElementById("chat-log");
+    var form = document.getElementById("chat-form");
+    var input = document.getElementById("chat-input");
+    var sendBtn = document.getElementById("chat-send");
+    var history = [];
+    var threadId = null;
+
+    function bubble(role, text, extra) {
+      var el = document.createElement("div");
+      el.className = "chat-msg " + role + (extra ? " " + extra : "");
+      el.textContent = text;
+      log.appendChild(el);
+      log.scrollTop = log.scrollHeight;
+      return el;
+    }
+
+    if (!configured) {
+      bubble("bot", "Chat backend not configured yet — set TRIPVEST_API in config.js once Render is deployed.", "error");
+      input.disabled = true; sendBtn.disabled = true;
+      // CTA still scrolls so the layout works.
+      startCta.addEventListener("click", function () { chatSection.scrollIntoView({ behavior: "smooth" }); });
+      return;
+    }
+
+    // Silent dyno warm-up — discarded.
+    fetch(API + "/", { method: "HEAD", mode: "cors" }).catch(function () {});
+
+    async function send(message) {
+      bubble("user", message);
+      history.push({ role: "user", content: message });
+      var thinking = bubble("bot", "thinking…", "thinking");
+      sendBtn.disabled = true; input.disabled = true;
+      try {
+        var r = await fetch(API + "/api/chat/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: message, history: history.slice(0, -1), thread_id: threadId }),
+        });
+        var data = await r.json();
+        thinking.remove();
+        if (!r.ok) { bubble("bot", data.error || "Server error", "error"); return; }
+        threadId = data.thread_id || threadId;
+        bubble("bot", data.reply || "(no reply)");
+        history.push({ role: "assistant", content: data.reply || "" });
+      } catch (e) {
+        thinking.remove();
+        bubble("bot", "Network error: " + e.message + " (backend may be cold-starting — try again in 30s)", "error");
+      } finally {
+        sendBtn.disabled = false; input.disabled = false;
+        input.focus();
+      }
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var v = input.value.trim();
+      if (!v) return;
+      input.value = "";
+      send(v);
     });
+
+    // ----- Lazy auto-greet with trip context -----
+    var greeted = false;
+    function buildGreeting() {
+      var costStr = fmt(selectedTrip.cost);
+      if (selectedTrip.label) {
+        return "Hi! I'm thinking about " + selectedTrip.label + " in 2036, around " + costStr + ". How do I get there for half the price?";
+      }
+      return "Hi! I'm planning a 2036 trip, around " + costStr + ". How do I get it for half the price?";
+    }
+    function fireGreet() {
+      if (greeted) return;
+      greeted = true;
+      send(buildGreeting());
+    }
+
+    startCta.addEventListener("click", function () {
+      chatSection.scrollIntoView({ behavior: "smooth" });
+      fireGreet();
+      setTimeout(function () { if (!input.disabled) input.focus(); }, 600);
+    });
+    input.addEventListener("focus", fireGreet);
+
+    if ("IntersectionObserver" in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { fireGreet(); io.disconnect(); }
+        });
+      }, { threshold: 0.2 });
+      io.observe(chatSection);
+    } else {
+      // Old browsers: fire on first scroll.
+      window.addEventListener("scroll", function onScroll() {
+        window.removeEventListener("scroll", onScroll);
+        fireGreet();
+      }, { once: true });
+    }
   })();
 
   // === Chart ===
@@ -599,71 +711,6 @@
     }, '≈ 2× your money'));
   })();
 
-  // === Chat ===
-  (function () {
-    var apiOverride = new URLSearchParams(location.search).get("api");
-    var API = (apiOverride || window.TRIPVEST_API || "").replace(/\/$/, "");
-    var configured = API && !API.includes("YOUR-RENDER-URL");
-
-    var log = document.getElementById("chat-log");
-    var form = document.getElementById("chat-form");
-    var input = document.getElementById("chat-input");
-    var sendBtn = document.getElementById("chat-send");
-    var history = [];
-    var threadId = null;
-
-    function bubble(role, text, extra) {
-      var el = document.createElement("div");
-      el.className = "chat-msg " + role + (extra ? " " + extra : "");
-      el.textContent = text;
-      log.appendChild(el);
-      log.scrollTop = log.scrollHeight;
-      return el;
-    }
-
-    if (!configured) {
-      bubble("bot", "Chat backend not configured yet — set TRIPVEST_API in config.js once Render is deployed.", "error");
-      input.disabled = true; sendBtn.disabled = true;
-      return;
-    }
-
-    async function send(message) {
-      bubble("user", message);
-      history.push({ role: "user", content: message });
-      var thinking = bubble("bot", "thinking…", "thinking");
-      sendBtn.disabled = true; input.disabled = true;
-      try {
-        var r = await fetch(API + "/api/chat/send", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: message, history: history.slice(0, -1), thread_id: threadId }),
-        });
-        var data = await r.json();
-        thinking.remove();
-        if (!r.ok) { bubble("bot", data.error || "Server error", "error"); return; }
-        threadId = data.thread_id || threadId;
-        bubble("bot", data.reply || "(no reply)");
-        history.push({ role: "assistant", content: data.reply || "" });
-      } catch (e) {
-        thinking.remove();
-        bubble("bot", "Network error: " + e.message + " (backend may be cold-starting — try again in 30s)", "error");
-      } finally {
-        sendBtn.disabled = false; input.disabled = false;
-        input.focus();
-      }
-    }
-
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      var v = input.value.trim();
-      if (!v) return;
-      input.value = "";
-      send(v);
-    });
-
-    // Auto-greet on load — also warms up the Render dyno.
-    send("Hi! Give me more info — how do I get my trip in 10 years for half the price?");
-  })();
 </script>
 </body>
 </html>

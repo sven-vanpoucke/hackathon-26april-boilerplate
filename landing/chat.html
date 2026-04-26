@@ -126,8 +126,24 @@
     sendMessage(v);
   });
 
-  // Auto-greet: send "Hi" as the user's first message on load.
-  window.addEventListener("load", function () { sendMessage("Hi"); });
+  // Auto-greet: pass through trip context if landing handed it off via URL.
+  function buildGreeting() {
+    var params = new URLSearchParams(location.search);
+    var trip = (params.get("trip") || "").trim();
+    var costRaw = parseInt(params.get("cost") || "", 10);
+    var costStr = costRaw > 0 ? "€" + costRaw.toLocaleString("en-US") : "";
+    if (trip && costStr) {
+      return "Hi! I'm thinking about " + trip + " in 2036, around " + costStr + ". How do I get there for half the price?";
+    }
+    if (costStr) {
+      return "Hi! I'm planning a 2036 trip, around " + costStr + ". How do I get it for half the price?";
+    }
+    if (trip) {
+      return "Hi! I'm thinking about " + trip + " in 2036. How do I get there for half the price?";
+    }
+    return "Hi! Give me more info — how do I get my trip in 10 years for half the price?";
+  }
+  window.addEventListener("load", function () { sendMessage(buildGreeting()); });
 </script>
 </body>
 </html>
