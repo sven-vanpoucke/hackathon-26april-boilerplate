@@ -274,6 +274,16 @@
   .chat-msg.user { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
   .chat-msg.bot { align-self: flex-start; background: var(--card); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
   .chat-msg.bot.thinking { color: var(--muted); font-style: italic; }
+  .chat-msg.bot p { margin: 0; }
+  .chat-msg.bot p + p { margin-top: 8px; }
+  .chat-msg.bot p + ul, .chat-msg.bot ul + p { margin-top: 8px; }
+  .chat-msg.bot ul { margin: 0; padding-left: 22px; }
+  .chat-msg.bot li { margin: 2px 0; }
+  .chat-msg.bot li::marker { color: var(--muted-2); }
+  .chat-msg.bot strong { font-weight: 600; color: var(--fg); }
+  .chat-msg.bot em { font-style: italic; }
+  .chat-msg.bot code { background: var(--bg); padding: 1px 6px; border-radius: 4px; font-size: 0.9em; font-family: ui-monospace, SFMono-Regular, "SF Mono", monospace; }
+  .chat-msg.bot a { color: var(--accent); text-decoration: underline; word-break: break-all; }
   .chat-msg.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
   .chat-form {
     display: flex; gap: 8px; padding: 12px;
@@ -538,10 +548,52 @@
     var history = [];
     var threadId = null;
 
+    function renderMarkdown(text) {
+      function escape(s) {
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+      function inline(s) {
+        s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+        s = s.replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>');
+        s = s.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1<em>$2</em>');
+        s = s.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+        return s;
+      }
+      return escape(text).split(/\n\n+/).map(function (block) {
+        block = block.replace(/^\s+|\s+$/g, '');
+        if (!block) return '';
+        var html = '', paraBuf = [], listBuf = [];
+        function flushPara() {
+          if (paraBuf.length) {
+            html += '<p>' + paraBuf.map(inline).join('<br>') + '</p>';
+            paraBuf = [];
+          }
+        }
+        function flushList() {
+          if (listBuf.length) {
+            html += '<ul>' + listBuf.map(function (l) { return '<li>' + inline(l) + '</li>'; }).join('') + '</ul>';
+            listBuf = [];
+          }
+        }
+        block.split('\n').forEach(function (line) {
+          var bm = line.match(/^\s*[-•]\s+(.*)$/);
+          if (bm) { flushPara(); listBuf.push(bm[1]); }
+          else { flushList(); paraBuf.push(line); }
+        });
+        flushPara();
+        flushList();
+        return html;
+      }).join('');
+    }
+
     function bubble(role, text, extra) {
       var el = document.createElement("div");
       el.className = "chat-msg " + role + (extra ? " " + extra : "");
-      el.textContent = text;
+      if (role === "bot" && !extra) {
+        el.innerHTML = renderMarkdown(text);
+      } else {
+        el.textContent = text;
+      }
       log.appendChild(el);
       log.scrollTop = log.scrollHeight;
       return el;

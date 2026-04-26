@@ -38,6 +38,15 @@
   .msg.user { align-self: flex-end; background: var(--bubble-user); color: #fff; border-bottom-right-radius: 4px; }
   .msg.bot { align-self: flex-start; background: var(--bubble-bot); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
   .msg.bot.thinking { color: var(--muted); font-style: italic; }
+  .msg.bot p { margin: 0; }
+  .msg.bot p + p { margin-top: 8px; }
+  .msg.bot p + ul, .msg.bot ul + p { margin-top: 8px; }
+  .msg.bot ul { margin: 0; padding-left: 22px; }
+  .msg.bot li { margin: 2px 0; }
+  .msg.bot strong { font-weight: 600; color: var(--fg); }
+  .msg.bot em { font-style: italic; }
+  .msg.bot code { background: var(--bg); padding: 1px 6px; border-radius: 4px; font-size: 0.9em; font-family: ui-monospace, SFMono-Regular, "SF Mono", monospace; }
+  .msg.bot a { color: var(--accent); text-decoration: underline; word-break: break-all; }
   .msg.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
   form {
     display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--border);
@@ -76,10 +85,52 @@
   var history = [];
   var threadId = null;
 
+  function renderMarkdown(text) {
+    function escape(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    function inline(s) {
+      s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+      s = s.replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>');
+      s = s.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1<em>$2</em>');
+      s = s.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+      return s;
+    }
+    return escape(text).split(/\n\n+/).map(function (block) {
+      block = block.replace(/^\s+|\s+$/g, '');
+      if (!block) return '';
+      var html = '', paraBuf = [], listBuf = [];
+      function flushPara() {
+        if (paraBuf.length) {
+          html += '<p>' + paraBuf.map(inline).join('<br>') + '</p>';
+          paraBuf = [];
+        }
+      }
+      function flushList() {
+        if (listBuf.length) {
+          html += '<ul>' + listBuf.map(function (l) { return '<li>' + inline(l) + '</li>'; }).join('') + '</ul>';
+          listBuf = [];
+        }
+      }
+      block.split('\n').forEach(function (line) {
+        var bm = line.match(/^\s*[-•]\s+(.*)$/);
+        if (bm) { flushPara(); listBuf.push(bm[1]); }
+        else { flushList(); paraBuf.push(line); }
+      });
+      flushPara();
+      flushList();
+      return html;
+    }).join('');
+  }
+
   function addBubble(role, text, extraClass) {
     var el = document.createElement("div");
     el.className = "msg " + role + (extraClass ? " " + extraClass : "");
-    el.textContent = text;
+    if (role === "bot" && !extraClass) {
+      el.innerHTML = renderMarkdown(text);
+    } else {
+      el.textContent = text;
+    }
     log.appendChild(el);
     log.scrollTop = log.scrollHeight;
     return el;
