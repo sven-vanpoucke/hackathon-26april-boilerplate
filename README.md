@@ -2,28 +2,17 @@
 
 Build AI agents on top of [Alpaca Markets](https://alpaca.markets) through [Orca](https://orcaplatform.ai) — the orchestration layer for AI agents.
 
-This boilerplate ships **two independent starter agents**, one for each side of Alpaca. Pick one — or build both and have them collaborate.
+This boilerplate ships the **Broker Agent** — a brokerage operations assistant that onboards customers (KYC), funds accounts (ACH), moves cash (journals), and trades on behalf of end-users via the [Alpaca Broker API](https://docs.alpaca.markets/docs/broker-api).
 
-| Agent | What it does | Alpaca product | Port |
-|-------|-------------|----------------|------|
-| **Trading Agent** | Personal trading assistant — quotes, portfolio, place / cancel orders for *one* account | [Trading API](https://docs.alpaca.markets/docs/trading-api) | 8000 |
-| **Broker Agent** | Brokerage operations assistant — onboard customers (KYC), fund accounts (ACH), move cash (journals), trade on behalf of end-users | [Broker API](https://docs.alpaca.markets/docs/broker-api) | 8001 |
-
-> The Trading API is for **your** account. The Broker API is for **your customers'** accounts — it's what fintechs, neobanks, and robo-advisors build on top of.
+> The Broker API is for **your customers'** accounts — it's what fintechs, neobanks, and robo-advisors build on top of.
 
 ---
 
 ## The Challenge
 
-Each agent receives natural-language messages from users via Orca and responds by calling the appropriate Alpaca API.
+The agent receives natural-language messages from users via Orca and responds by calling the appropriate Alpaca API.
 
 Some ideas:
-
-**Trading Agent**
-- *"What's Apple's current price?"*
-- *"What's my buying power?"*
-- *"Buy 5 shares of TSLA"*
-- *"Close all my crypto positions"*
 
 **Broker Agent**
 - *"Onboard a new customer named Jane Doe, email jane@example.com"*
@@ -37,30 +26,22 @@ Some ideas:
 
 ## Quick Start
 
-### Run a single agent
+### Run the agent
 
 ```bash
 git clone <repo-url> && cd boilerplate-alpaca
 
-# Trading agent
-cd trading-agent
-pip install -r requirements.txt
-python main.py
-# → http://localhost:8000
-
-# Broker agent (in another terminal)
 cd broker-agent
 pip install -r requirements.txt
 python main.py
 # → http://localhost:8001
 ```
 
-### Run both with Docker
+### Run with Docker
 
 ```bash
 docker compose up --build
-# trading-agent → http://localhost:8000
-# broker-agent  → http://localhost:8001
+# broker-agent → http://localhost:8001
 ```
 
 > **API keys** (`ALPACA_API_KEY`, `ALPACA_BROKER_API_KEY`, `OPENAI_API_KEY`, etc.) are configured in the Orca admin panel and delivered to your agent in every request via `data.variables`. Use `Variables(data.variables).get("VARIABLE_NAME")` — no local environment variables needed.
@@ -70,17 +51,12 @@ docker compose up --build
 ## Project Structure
 
 ```
-├── trading-agent/
-│   ├── main.py              ← Trading API agent (START HERE)
-│   ├── requirements.txt
-│   ├── Dockerfile
-│   └── docker-compose.yml
 ├── broker-agent/
 │   ├── main.py              ← Broker API agent (START HERE)
 │   ├── requirements.txt
 │   ├── Dockerfile
 │   └── docker-compose.yml
-├── docker-compose.yml       ← Runs both agents together
+├── docker-compose.yml       ← Runs the agent
 ├── .gitignore
 └── README.md
 ```
@@ -88,15 +64,6 @@ docker compose up --build
 ---
 
 ## Variables (set in Orca admin panel)
-
-### Trading Agent
-
-| Variable | Description |
-|----------|-------------|
-| `ALPACA_API_KEY` | Your Alpaca **Trading** API key ID |
-| `ALPACA_SECRET_KEY` | Your Alpaca **Trading** secret key |
-| `ALPACA_BASE_URL` | `https://paper-api.alpaca.markets` (paper) or `https://api.alpaca.markets` (live) |
-| `OPENAI_API_KEY` | Optional — for LLM-based intent parsing |
 
 ### Broker Agent
 
@@ -107,7 +74,7 @@ docker compose up --build
 | `ALPACA_BROKER_SANDBOX` | `"true"` (default, `https://broker-api.sandbox.alpaca.markets`) or `"false"` (live) |
 | `OPENAI_API_KEY` | Optional — for LLM-based intent parsing |
 
-> Trading and Broker use **different keys**. Sign up for the Broker sandbox at [broker-app.alpaca.markets/sign-up](https://broker-app.alpaca.markets/sign-up). Always start in **sandbox / paper** mode.
+> Always start in **sandbox** mode. Sign up for the Broker sandbox at [broker-app.alpaca.markets/sign-up](https://broker-app.alpaca.markets/sign-up).
 
 ---
 

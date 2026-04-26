@@ -1,5 +1,0 @@
-services:
-  trading-agent:
-    build: .
-    ports:
-      - "8000:8000"

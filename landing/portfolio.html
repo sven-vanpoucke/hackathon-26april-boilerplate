@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>How TripVest invests — portfolio</title>
+<meta name="description" content="A simple split across global stocks, bonds and gold — three archetypes from conservative to growth." />
+<style>
+  :root {
+    --bg: #fafaf9; --fg: #18181b; --muted: #71717a;
+    --accent: #0f766e; --accent-hover: #115e59;
+    --border: #e4e4e7; --card: #ffffff;
+    --voo: #0f766e; --bnd: #0891b2; --gld: #ca8a04;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .brand { font-weight: 700; font-size: 18px; }
+  .brand span { margin-right: 6px; }
+  .brand a { color: inherit; text-decoration: none; }
+  .badge {
+    font-size: 12px; color: var(--muted); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 10px; background: var(--card);
+  }
+  h1 {
+    font-size: clamp(24px, 6vw, 32px); line-height: 1.15;
+    letter-spacing: -0.02em; margin: 0 0 8px;
+  }
+  .sub { color: var(--muted); margin: 0 0 32px; }
+  h2 { font-size: 18px; margin: 32px 0 12px; }
+  .archetype {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 16px; margin-bottom: 12px;
+  }
+  .archetype-head {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+    margin-bottom: 10px;
+  }
+  .archetype-name { font-weight: 600; font-size: 15px; }
+  .archetype-tag { color: var(--muted); font-size: 13px; }
+  .bar {
+    height: 14px; border-radius: 8px; overflow: hidden;
+    display: flex; background: var(--border);
+  }
+  .bar-seg { height: 100%; }
+  .bar-legend {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    margin-top: 8px; font-size: 12px; color: var(--muted);
+  }
+  .bar-legend i {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    margin-right: 5px; vertical-align: 1px;
+  }
+  .etf-grid {
+    display: grid; gap: 12px; margin-top: 16px;
+  }
+  .etf {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 18px;
+  }
+  .etf-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .etf-tick {
+    font-weight: 700; font-size: 14px;
+    padding: 3px 8px; border-radius: 6px;
+    color: #fff;
+  }
+  .etf-tick.voo { background: var(--voo); }
+  .etf-tick.bnd { background: var(--bnd); }
+  .etf-tick.gld { background: var(--gld); }
+  .etf h3 { margin: 0; font-size: 15px; }
+  .etf p { margin: 0; color: var(--muted); font-size: 14px; }
+  .cta-row { display: flex; gap: 12px; align-items: center; margin-top: 32px; flex-wrap: wrap; }
+  .cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent); color: #fff;
+    padding: 12px 20px; border-radius: 999px;
+    text-decoration: none; font-weight: 600; font-size: 15px;
+    transition: background 120ms;
+  }
+  .cta:hover { background: var(--accent-hover); }
+  .cta-secondary { color: var(--muted); text-decoration: none; font-size: 14px; }
+  .cta-secondary:hover { color: var(--fg); }
+  .small {
+    margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--muted);
+  }
+  @media (min-width: 640px) { .wrap { padding: 56px 32px 100px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><a href="/"><span>✈️</span>TripVest</a></div>
+    <div class="badge">portfolio</div>
+  </header>
+
+  <h1>How TripVest invests</h1>
+  <p class="sub">
+    A simple, diversified mix across global stocks, bonds, and gold —
+    three archetypes that match how much short-term volatility you're
+    comfortable with.
+  </p>
+
+  <div class="archetype">
+    <div class="archetype-head">
+      <span class="archetype-name">Conservative</span>
+      <span class="archetype-tag">low volatility · steady</span>
+    </div>
+    <div class="bar">
+      <div class="bar-seg" style="width:30%; background: var(--voo);"></div>
+      <div class="bar-seg" style="width:60%; background: var(--bnd);"></div>
+      <div class="bar-seg" style="width:10%; background: var(--gld);"></div>
+    </div>
+    <div class="bar-legend">
+      <span><i style="background: var(--voo);"></i>30% VOO</span>
+      <span><i style="background: var(--bnd);"></i>60% BND</span>
+      <span><i style="background: var(--gld);"></i>10% GLD</span>
+    </div>
+  </div>
+
+  <div class="archetype">
+    <div class="archetype-head">
+      <span class="archetype-name">Balanced</span>
+      <span class="archetype-tag">middle ground · default</span>
+    </div>
+    <div class="bar">
+      <div class="bar-seg" style="width:50%; background: var(--voo);"></div>
+      <div class="bar-seg" style="width:40%; background: var(--bnd);"></div>
+      <div class="bar-seg" style="width:10%; background: var(--gld);"></div>
+    </div>
+    <div class="bar-legend">
+      <span><i style="background: var(--voo);"></i>50% VOO</span>
+      <span><i style="background: var(--bnd);"></i>40% BND</span>
+      <span><i style="background: var(--gld);"></i>10% GLD</span>
+    </div>
+  </div>
+
+  <div class="archetype">
+    <div class="archetype-head">
+      <span class="archetype-name">Growth</span>
+      <span class="archetype-tag">higher long-run return · bigger swings</span>
+    </div>
+    <div class="bar">
+      <div class="bar-seg" style="width:70%; background: var(--voo);"></div>
+      <div class="bar-seg" style="width:20%; background: var(--bnd);"></div>
+      <div class="bar-seg" style="width:10%; background: var(--gld);"></div>
+    </div>
+    <div class="bar-legend">
+      <span><i style="background: var(--voo);"></i>70% VOO</span>
+      <span><i style="background: var(--bnd);"></i>20% BND</span>
+      <span><i style="background: var(--gld);"></i>10% GLD</span>
+    </div>
+  </div>
+
+  <h2>What's actually in there</h2>
+  <div class="etf-grid">
+    <div class="etf">
+      <div class="etf-head">
+        <span class="etf-tick voo">VOO</span>
+        <h3>Global stocks (S&amp;P 500)</h3>
+      </div>
+      <p>One ETF that holds the 500 biggest US companies — Apple, Microsoft, Coca-Cola and friends. The growth engine of the portfolio.</p>
+    </div>
+    <div class="etf">
+      <div class="etf-head">
+        <span class="etf-tick bnd">BND</span>
+        <h3>Bonds</h3>
+      </div>
+      <p>Loans to governments and big companies. Pays predictable interest, moves less than stocks. Cushions the bumps.</p>
+    </div>
+    <div class="etf">
+      <div class="etf-head">
+        <span class="etf-tick gld">GLD</span>
+        <h3>Gold</h3>
+      </div>
+      <p>Physical gold in a vault. Tends to hold value when everything else wobbles. Your "just in case" slice.</p>
+    </div>
+  </div>
+
+  <div class="cta-row">
+    <a class="cta" href="/chat.html">
+      Start your trip fund
+      <span aria-hidden="true">→</span>
+    </a>
+    <a class="cta-secondary" href="/">← Back to overview</a>
+  </div>
+
+  <div class="small">
+    <p>Sandbox demo. No real money, no real trades. Allocations and ETFs picked for an illustrative student-friendly mix — not financial advice.</p>
+  </div>
+</div>
+</body>
+</html>
