@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>TripVest — your 2036 trip, half-priced</title>
 <meta name="description" content="Save for a future trip. Your money roughly doubles in 10 years — start with €25 today and your 2036 trip is effectively half-price." />
+<script src="/config.js"></script>
 <style>
   :root {
     --bg: #fafaf9;
@@ -60,6 +61,65 @@
   .cta:hover { background: var(--accent-hover); }
   .cta:active { transform: translateY(1px); }
   .cta-note { display: block; font-size: 13px; color: var(--muted); margin-top: 12px; }
+  /* Inline chat widget */
+  .chat-card {
+    margin-top: 24px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden;
+    display: flex; flex-direction: column;
+    height: clamp(420px, 60vh, 560px);
+  }
+  .chat-head {
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px;
+  }
+  .chat-head strong { font-weight: 600; }
+  .chat-head .live { color: var(--accent); font-size: 12px; margin-left: auto; }
+  .chat-head .live::before {
+    content: ""; display: inline-block; width: 8px; height: 8px;
+    background: var(--accent); border-radius: 50%; margin-right: 5px;
+    vertical-align: 1px;
+  }
+  .chat-log {
+    flex: 1; overflow-y: auto; padding: 14px;
+    display: flex; flex-direction: column; gap: 8px;
+    background: var(--bg);
+  }
+  .chat-msg {
+    max-width: 86%; padding: 9px 13px; border-radius: 14px;
+    white-space: pre-wrap; word-wrap: break-word; font-size: 14.5px; line-height: 1.45;
+  }
+  .chat-msg.user {
+    align-self: flex-end; background: var(--accent); color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .chat-msg.bot {
+    align-self: flex-start; background: var(--card); border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+  }
+  .chat-msg.bot.thinking { color: var(--muted); font-style: italic; }
+  .chat-msg.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+  .chat-form {
+    display: flex; gap: 8px; padding: 10px;
+    border-top: 1px solid var(--border); background: var(--card);
+  }
+  .chat-form input {
+    flex: 1; padding: 10px 14px; border: 1px solid var(--border);
+    border-radius: 999px; font-size: 15px; background: #fff; color: var(--fg);
+  }
+  .chat-form input:focus { outline: none; border-color: var(--accent); }
+  .chat-form button {
+    padding: 0 18px; border: 0; border-radius: 999px;
+    background: var(--accent); color: #fff; font-weight: 600;
+    cursor: pointer; font-size: 15px;
+  }
+  .chat-form button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .chat-link {
+    display: inline-block; margin-top: 12px; font-size: 13px;
+    color: var(--muted); text-decoration: none;
+  }
+  .chat-link:hover { color: var(--fg); }
   section.steps {
     margin-top: 72px;
     display: grid; gap: 16px;
@@ -118,12 +178,18 @@
       does now — when you start today.
     </p>
 
-    <a class="cta"
-       href="/chat.html">
-      Start your trip fund
-      <span aria-hidden="true">→</span>
-    </a>
-    <span class="cta-note">Opens a chat — takes about 3 minutes.</span>
+    <section class="chat-card" aria-label="TripVest chat">
+      <div class="chat-head">
+        <strong>✈️ Talk to TripVest</strong>
+        <span class="live">live</span>
+      </div>
+      <div id="chat-log" class="chat-log" aria-live="polite"></div>
+      <form id="chat-form" class="chat-form">
+        <input id="chat-input" placeholder="Type a message…" autocomplete="off" />
+        <button id="chat-send" type="submit">Send</button>
+      </form>
+    </section>
+    <a class="chat-link" href="/chat.html">Open in full screen ↗</a>
 
     <section class="chart-card" aria-label="Savings vs investing chart">
       <div class="chart-head">
@@ -256,6 +322,80 @@
       <p><strong>Sandbox demo only.</strong> No real money, no real trades. Built on Alpaca's sandbox brokerage API.</p>
       <p>Illustrative ~7% returns based on the Rule of 72. Not financial advice.</p>
     </div>
+
+    <script>
+      (function () {
+        var apiOverride = new URLSearchParams(location.search).get("api");
+        var API = (apiOverride || window.TRIPVEST_API || "").replace(/\/$/, "");
+        var configured = API && !API.includes("YOUR-RENDER-URL");
+
+        var log = document.getElementById("chat-log");
+        var form = document.getElementById("chat-form");
+        var input = document.getElementById("chat-input");
+        var sendBtn = document.getElementById("chat-send");
+        var history = [];
+        var threadId = null;
+
+        function bubble(role, text, extra) {
+          var el = document.createElement("div");
+          el.className = "chat-msg " + role + (extra ? " " + extra : "");
+          el.textContent = text;
+          log.appendChild(el);
+          log.scrollTop = log.scrollHeight;
+          return el;
+        }
+
+        if (!configured) {
+          bubble("bot", "Chat backend not configured yet — set TRIPVEST_API in config.js once Render is deployed.", "error");
+          input.disabled = true; sendBtn.disabled = true;
+          return;
+        }
+
+        async function send(message) {
+          bubble("user", message);
+          history.push({ role: "user", content: message });
+          var thinking = bubble("bot", "thinking…", "thinking");
+          sendBtn.disabled = true; input.disabled = true;
+          try {
+            var r = await fetch(API + "/api/chat/send", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                message: message,
+                history: history.slice(0, -1),
+                thread_id: threadId,
+              }),
+            });
+            var data = await r.json();
+            thinking.remove();
+            if (!r.ok) {
+              bubble("bot", data.error || "Server error", "error");
+              return;
+            }
+            threadId = data.thread_id || threadId;
+            bubble("bot", data.reply || "(no reply)");
+            history.push({ role: "assistant", content: data.reply || "" });
+          } catch (e) {
+            thinking.remove();
+            bubble("bot", "Network error: " + e.message + " (backend may be cold-starting — try again in 30s)", "error");
+          } finally {
+            sendBtn.disabled = false; input.disabled = false;
+            input.focus();
+          }
+        }
+
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          var v = input.value.trim();
+          if (!v) return;
+          input.value = "";
+          send(v);
+        });
+
+        // Auto-greet on load — also warms up the Render dyno.
+        send("Hi");
+      })();
+    </script>
   </main>
 </div>
 </body>

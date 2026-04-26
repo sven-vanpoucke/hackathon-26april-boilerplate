@@ -78,43 +78,6 @@ docker compose up --build
 
 ---
 
-## Trading API Quick Reference
-
-Install: `pip install alpaca-py`
-
-```python
-from alpaca.trading.client import TradingClient
-from alpaca.data.historical import StockHistoricalDataClient
-from alpaca.trading.requests import MarketOrderRequest
-from alpaca.trading.enums import OrderSide, TimeInForce
-from alpaca.data.requests import StockLatestQuoteRequest
-
-trading     = TradingClient(api_key, secret_key, paper=True)
-market_data = StockHistoricalDataClient(api_key, secret_key)
-
-# Account info
-account = trading.get_account()
-print(account.buying_power, account.portfolio_value)
-
-# Positions
-positions = trading.get_all_positions()
-
-# Latest quote
-quote = market_data.get_stock_latest_quote(StockLatestQuoteRequest(symbol_or_symbols="AAPL"))
-ask   = quote["AAPL"].ask_price
-
-# Place a market buy order
-order = trading.submit_order(MarketOrderRequest(
-    symbol="AAPL", qty=1, side=OrderSide.BUY, time_in_force=TimeInForce.DAY,
-))
-
-# Cancel all open orders / close all positions
-trading.cancel_orders()
-trading.close_all_positions(cancel_orders=True)
-```
-
----
-
 ## Broker API Quick Reference
 
 Install: `pip install alpaca-py`
@@ -231,9 +194,7 @@ session.usage.track(tokens=1500, token_type="total")
 ## How It Connects
 
 ```
-                  ┌──────────────────────────────► Trading Agent (8000) ──► Alpaca Trading API
-  User ──► Orca Cloud
-                  └──────────────────────────────► Broker  Agent (8001) ──► Alpaca Broker  API
+User ──► Orca Cloud ──────────────────────────────► Broker Agent (8001) ──► Alpaca Broker API
 ```
 
 ---
@@ -251,24 +212,21 @@ session.usage.track(tokens=1500, token_type="total")
 
 ## Tips
 
-- Use **paper trading** (Trading API) and **sandbox** (Broker API) during development — both are free and safe
-- Use **function calling** (OpenAI) or **tool use** (Anthropic) to map user intent to Alpaca actions
+- Use **sandbox** (Broker API) during development — it's free and safe
+- Use **tool use** (Anthropic) to map user intent to Alpaca actions
 - Return **concise, structured responses** — the user doesn't need raw JSON
-- Add dependencies to `requirements.txt` as you go (`openai`, `anthropic`, `httpx`, etc.)
-- For the Broker Agent, think of the user as an **operator** at a fintech, not necessarily an end-investor
+- Add dependencies to `requirements.txt` as you go
+- Think of the user as an **operator** at a fintech, not necessarily an end-investor
 - Test your agent locally before connecting through Orca
 
 ---
 
 ## Resources
 
-- [Alpaca Trading API Docs](https://docs.alpaca.markets/docs/trading-api)
 - [Alpaca Broker API Docs](https://docs.alpaca.markets/docs/broker-api)
 - [alpaca-py SDK on PyPI](https://pypi.org/project/alpaca-py/) · [GitHub](https://github.com/alpacahq/alpaca-py)
-- [alpaca-py Trading reference](https://alpaca.markets/sdks/python/trading.html)
 - [alpaca-py Broker reference](https://alpaca.markets/sdks/python/broker.html)
 - [Orca SDK on PyPI](https://pypi.org/project/orca-platform-sdk-ui/)
-- [OpenAI Function Calling](https://platform.openai.com/docs/guides/function-calling)
 - [Anthropic Tool Use](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)
 
 ---
